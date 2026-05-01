@@ -1,10 +1,19 @@
 # PlaylistSync
 
-Tool sederhana berbasis Electron untuk memindahkan playlist YouTube dari satu akun ke akun lain.
+Tool desktop berbasis Electron untuk memindahkan playlist YouTube dari satu akun ke akun lain dengan mudah dan aman.
 
 ![Electron](https://img.shields.io/badge/Electron-191970?style=flat-square&logo=Electron&logoColor=white)
 ![Node.js](https://img.shields.io/badge/Node.js-43853D?style=flat-square&logo=node.js&logoColor=white)
 ![YouTube API](https://img.shields.io/badge/YouTube_API_v3-FF0000?style=flat-square&logo=youtube&logoColor=white)
+
+---
+
+##  Download
+
+-  **[Download PlaylistSync (Latest)](https://github.com/zakkutsu/yt-playlist-sync/releases/latest/download/playlistsync.Setup.1.0.0.exe)**  
+  Windows installer — **Recommended**
+
+**Requirements:** Windows 10 / 11 (64-bit)
 
 ---
 
