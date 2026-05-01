@@ -42,4 +42,9 @@ module.exports = {
   errorOccurred: "An error occurred",
   tryAgain:      "Try Again",
   ofVideos:      (c, t) => `${c} of ${t} videos`,
+
+  // Custom rename
+  playlistName:     "Playlist Name (Optional)",
+  playlistNameDesc: "Leave blank to use the original playlist name",
+  playlistNamePlaceholder: "Enter custom playlist name...",
 };
