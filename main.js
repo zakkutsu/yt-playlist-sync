@@ -246,6 +246,20 @@ ipcMain.handle('transfer-playlist', async (event, { url: playlistUrl, accountNam
     }
   }
 
+  // GET source playlist details (untuk mengambil namanya)
+  let sourcePlaylistTitle = 'Imported Playlist';
+  try {
+    const plRes = await youtube.playlists.list({
+      part: 'snippet',
+      id: playlistId
+    });
+    if (plRes.data.items && plRes.data.items.length > 0) {
+      sourcePlaylistTitle = plRes.data.items[0].snippet.title;
+    }
+  } catch (err) {
+    console.error('Gagal mendapatkan nama playlist sumber:', err);
+  }
+
   // GET videos
   let videos = [];
   let nextPageToken = null;
@@ -267,7 +281,7 @@ ipcMain.handle('transfer-playlist', async (event, { url: playlistUrl, accountNam
     part: 'snippet,status',
     requestBody: {
       snippet: {
-        title: 'Imported Playlist'
+        title: sourcePlaylistTitle
       },
       status: {
         privacyStatus: 'private'
