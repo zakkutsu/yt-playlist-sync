@@ -43,6 +43,35 @@
       .input-focus:focus {
         box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
       }
+      /* Toast Notification */
+      #toast {
+        position: fixed;
+        bottom: 28px;
+        right: 28px;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: #fff;
+        border-radius: 18px;
+        padding: 14px 20px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+        border-left: 4px solid #ef4444;
+        min-width: 260px;
+        max-width: 360px;
+        transform: translateY(20px);
+        opacity: 0;
+        transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        pointer-events: none;
+      }
+      #toast.show {
+        transform: translateY(0);
+        opacity: 1;
+        pointer-events: auto;
+      }
+      #toast.toast-warning { border-left-color: #f59e0b; }
+      #toast.toast-error   { border-left-color: #ef4444; }
+      #toast.toast-success { border-left-color: #22c55e; }
     </style>
   </head>
   <body class="bg-slate-50 text-slate-900 min-h-screen">
@@ -397,9 +426,18 @@
       // Step 3: Transfer
       document.getElementById("transfer").onclick = async () => {
         const url = document.getElementById("playlist").value.trim();
-        if (!url) return;
+        if (!url) {
+          showToast("warning", "URL Kosong", "Masukkan link playlist YouTube terlebih dahulu.");
+          return;
+        }
 
         const accountName = document.getElementById("account-select").value;
+        if (!accountName) {
+          showToast("warning", "Akun Belum Dipilih", "Pilih atau tambahkan akun YouTube di Langkah 02.");
+          return;
+        }
+
+
         const progressContainer = document.getElementById("progress-container");
         const transferBtn = document.getElementById("transfer");
 
@@ -456,6 +494,27 @@
           await loadAccounts();
         }
       };
+      function showToast(type, title, message) {
+        const toast = document.getElementById("toast");
+        const icons = {
+          warning: `<svg class="w-5 h-5 text-amber-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>`,
+          error:   `<svg class="w-5 h-5 text-red-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>`,
+          success: `<svg class="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>`,
+        };
+        toast.className = `toast-${type}`;
+        toast.innerHTML = `
+          ${icons[type] || icons.error}
+          <div>
+            <p class="text-sm font-bold text-slate-800">${title}</p>
+            <p class="text-xs text-slate-500 mt-0.5">${message}</p>
+          </div>`;
+        void toast.offsetWidth;
+        toast.classList.add("show");
+        clearTimeout(toast._timer);
+        toast._timer = setTimeout(() => toast.classList.remove("show"), 4000);
+      }
     </script>
+  <!-- Toast Notification -->
+  <div id="toast"></div>
   </body>
 </html>

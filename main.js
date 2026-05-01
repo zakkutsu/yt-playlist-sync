@@ -16,6 +16,7 @@ function createWindow() {
     },
   });
 
+  win.removeMenu();
   win.loadFile("index.html");
 }
 
