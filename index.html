@@ -263,6 +263,17 @@
               </div>
             </div>
 
+            <div class="space-y-2">
+              <label class="block text-sm font-semibold text-slate-700" data-i18n="playlistName"></label>
+              <p class="text-xs text-slate-500" data-i18n="playlistNameDesc"></p>
+              <input
+                id="custom-playlist-name"
+                type="text"
+                class="input-focus w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm outline-none focus:border-red-500 transition-all"
+                data-i18n-placeholder="playlistNamePlaceholder"
+              />
+            </div>
+
             <button
               id="transfer"
               disabled
@@ -351,6 +362,13 @@
         currentLang = lang;
         localStorage.setItem("lang", lang);
         applyLang();
+        updatePlaceholders();
+      }
+
+      function updatePlaceholders() {
+        document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
+          el.placeholder = t(el.dataset.i18nPlaceholder);
+        });
       }
       // ────────────────────────────────────────────────────────
 
@@ -461,6 +479,7 @@
           return;
         }
 
+        const customName = document.getElementById("custom-playlist-name").value.trim();
 
         const progressContainer = document.getElementById("progress-container");
         const transferBtn = document.getElementById("transfer");
@@ -470,7 +489,7 @@
         transferBtn.querySelector("[data-i18n]").innerText = t("processing");
 
         try {
-          await ipcRenderer.invoke("transfer-playlist", { url, accountName });
+          await ipcRenderer.invoke("transfer-playlist", { url, accountName, customName });
           document.getElementById("progress-text").innerText = t("doneLabel");
           document.getElementById("progress-text").classList.add("text-green-600");
           document.getElementById("progress-bar").style.width = "100%";
@@ -499,6 +518,7 @@
       // Auto-load logic
       window.onload = async () => {
         applyLang();
+        updatePlaceholders();
         const fs = require("fs");
         if (fs.existsSync("credentials.json")) {
           const statusEl = document.getElementById("creds-status");

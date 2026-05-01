@@ -227,7 +227,7 @@ ipcMain.handle("login-google", async () => {
 
 ipcMain.handle(
   "transfer-playlist",
-  async (event, { url: playlistUrl, accountName }) => {
+  async (event, { url: playlistUrl, accountName, customName }) => {
     try {
       const credentials = JSON.parse(fs.readFileSync("credentials.json"));
       const token = JSON.parse(fs.readFileSync(`tokens/${accountName}.json`));
@@ -277,6 +277,9 @@ ipcMain.handle(
         }
       }
 
+      // Use custom name if provided, otherwise use source playlist title
+      const playlistTitle = customName || sourcePlaylistTitle;
+
       // GET videos
       let videos = [];
       let nextPageToken = null;
@@ -298,7 +301,7 @@ ipcMain.handle(
         part: "snippet,status",
         requestBody: {
           snippet: {
-            title: sourcePlaylistTitle,
+            title: playlistTitle,
           },
           status: {
             privacyStatus: "private",

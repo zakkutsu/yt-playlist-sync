@@ -42,4 +42,9 @@ module.exports = {
   errorOccurred: "Terjadi kesalahan",
   tryAgain:      "Coba Lagi",
   ofVideos:      (c, t) => `${c} dari ${t} video`,
+
+  // Custom rename
+  playlistName:     "Nama Playlist (Opsional)",
+  playlistNameDesc: "Biarkan kosong untuk menggunakan nama playlist asli",
+  playlistNamePlaceholder: "Masukkan nama playlist custom...",
 };
