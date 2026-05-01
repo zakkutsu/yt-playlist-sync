@@ -18,3 +18,9 @@ yarn-error.log*
 # OS Files
 .DS_Store
 Thumbs.db
+
+# Build Outputs
+dist/
+build/
+release/
+
