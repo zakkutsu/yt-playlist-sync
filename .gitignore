@@ -3,6 +3,7 @@ node_modules/
 # Google OAuth Credentials
 credentials.json
 token.json
+tokens/
 
 # Environment variables
 .env

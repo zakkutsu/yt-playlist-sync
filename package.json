@@ -1,7 +1,7 @@
 {
-  "name": "yt-playlist-transfer",
+  "name": "playlistsync",
   "version": "1.0.0",
-  "description": "",
+  "description": "Tool modern untuk sinkronisasi playlist YouTube",
   "main": "main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",

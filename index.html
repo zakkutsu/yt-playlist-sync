@@ -1,29 +1,292 @@
 <!DOCTYPE html>
-<html>
-  <body>
-    <h1>YT Playlist Transfer</h1>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlaylistSync</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #fdfdfd;
+        }
+        .step-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .step-card.active {
+            border-color: #ef4444;
+            box-shadow: 0 10px 30px -10px rgba(239, 68, 68, 0.15);
+        }
+        .custom-loader {
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #ef4444;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .input-focus {
+            transition: all 0.2s;
+        }
+        .input-focus:focus {
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen">
+    
+    <!-- Navbar / Header Area -->
+    <header class="w-full py-8 text-center px-4">
+        <div class="flex items-center justify-center gap-3 mb-2">
+            <div class="bg-red-600 p-2.5 rounded-2xl shadow-lg shadow-red-200">
+                <svg class="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 4-8 4z"/>
+                </svg>
+            </div>
+            <span class="text-2xl font-extrabold tracking-tight text-slate-800">Playlist<span class="text-red-600">Sync</span></span>
+        </div>
+        <p class="text-slate-500 text-sm font-medium">Pindahkan koleksi video YouTube antar akun tanpa ribet.</p>
+    </header>
 
-    <button id="login">Login Google</button>
+    <main class="max-w-2xl mx-auto px-4 pb-20">
+        <div class="grid gap-6">
+            
+            <!-- Step 1: Credentials -->
+            <section id="card-1" class="step-card bg-white border border-slate-200 rounded-[2rem] p-8">
+                <div class="flex items-start justify-between mb-6">
+                    <div>
+                        <span class="inline-block px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-[10px] font-bold uppercase tracking-wider mb-2">Langkah 01</span>
+                        <h2 class="text-xl font-bold">Akses API Google Cloud</h2>
+                        <p class="text-slate-400 text-sm mt-1">Muat file <code class="text-red-500 font-mono">credentials.json</code> dari project Anda.</p>
+                    </div>
+                </div>
+                
+                <div class="flex flex-wrap items-center gap-4">
+                    <button id="load-creds" class="bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-2xl font-semibold text-sm transition-all flex items-center gap-2 group">
+                        <svg class="w-4 h-4 text-slate-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        Muat Credentials
+                    </button>
+                    <div id="creds-status" class="flex items-center gap-2 text-sm text-slate-400 transition-all duration-300">
+                        <div class="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
+                        <span>Menunggu file...</span>
+                    </div>
+                </div>
+            </section>
 
-    <p id="status"></p>
+            <!-- Step 2: Account Selection -->
+            <section id="card-2" class="step-card bg-white border border-slate-100 rounded-[2rem] p-8 opacity-40">
+                <div class="flex items-start justify-between mb-6">
+                    <div>
+                        <span class="inline-block px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-[10px] font-bold uppercase tracking-wider mb-2">Langkah 02</span>
+                        <h2 class="text-xl font-bold">Otorisasi Akun</h2>
+                        <p class="text-slate-400 text-sm mt-1">Pilih atau tambahkan akun YouTube tujuan transfer.</p>
+                    </div>
+                </div>
 
-    <input id="playlist" placeholder="Paste playlist URL" />
-    <button id="transfer">Start Transfer</button>
+                <div class="grid sm:grid-cols-5 gap-3">
+                    <div class="sm:col-span-3">
+                        <select id="account-select" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-red-500 transition-all appearance-none cursor-pointer">
+                            <option value="">Pilih Akun Tersimpan...</option>
+                        </select>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <button id="login" disabled class="w-full h-full bg-white border-2 border-slate-200 text-slate-700 hover:border-red-500 hover:text-red-600 px-4 py-3 rounded-2xl font-bold text-sm transition-all disabled:opacity-50 disabled:hover:border-slate-200 disabled:hover:text-slate-700 flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                            Akun Baru
+                        </button>
+                    </div>
+                </div>
+                <div id="login-status" class="mt-4 text-[13px] text-slate-400 flex items-center gap-2">
+                    <div class="status-dot w-1.5 h-1.5 rounded-full bg-slate-300 transition-all"></div>
+                    <span class="status-text italic">Belum ada akun yang terhubung</span>
+                </div>
+            </section>
 
-    <div id="progress"></div>
+            <!-- Step 3: Transfer Process -->
+            <section id="card-3" class="step-card bg-white border border-slate-100 rounded-[2rem] p-8 opacity-40">
+                <div class="flex items-start justify-between mb-6">
+                    <div>
+                        <span class="inline-block px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-[10px] font-bold uppercase tracking-wider mb-2">Langkah 03</span>
+                        <h2 class="text-xl font-bold text-slate-800">Mulai Transfer</h2>
+                        <p class="text-slate-400 text-sm mt-1">Masukkan URL playlist asal untuk memproses video.</p>
+                    </div>
+                </div>
+
+                <div class="space-y-5">
+                    <div class="relative group">
+                        <input id="playlist" type="text" placeholder="https://www.youtube.com/playlist?list=..." 
+                            class="input-focus w-full bg-slate-50 border border-slate-200 rounded-2xl pl-5 pr-12 py-4 text-sm outline-none focus:border-red-500 transition-all" />
+                        <div class="absolute right-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-red-500 transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.812h.01M19 15.242a4 4 0 01-5.656 0l-4-4a4 4 0 015.656-5.656l1.103 1.103m-.758 4.812h.01" /></svg>
+                        </div>
+                    </div>
+
+                    <button id="transfer" disabled class="w-full bg-red-600 hover:bg-red-700 text-white py-4 rounded-2xl font-bold text-base shadow-xl shadow-red-100 transition-all active:scale-[0.98] disabled:opacity-30 disabled:shadow-none flex items-center justify-center gap-3 group">
+                        <span>Transfer Playlist</span>
+                        <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                    </button>
+
+                    <!-- Progress Indicator -->
+                    <div id="progress-container" class="hidden animate-in fade-in slide-in-from-top-4 duration-500">
+                        <div class="bg-slate-50 border border-slate-100 rounded-3xl p-6 mt-4">
+                            <div class="flex justify-between items-end mb-3">
+                                <div class="space-y-1">
+                                    <p id="progress-text" class="text-xs font-bold text-slate-500 uppercase tracking-widest">Sedang Memproses</p>
+                                    <p id="progress-detail" class="text-sm font-semibold text-slate-700">0 video dari 0</p>
+                                </div>
+                                <span id="progress-percent" class="text-2xl font-black text-red-600">0%</span>
+                            </div>
+                            <div class="w-full h-3 bg-slate-200 rounded-full overflow-hidden">
+                                <div id="progress-bar" class="h-full bg-red-600 transition-all duration-700 ease-out shadow-[0_0_15px_rgba(239,68,68,0.4)]" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
 <script>
-  const { ipcRenderer } = require('electron');
+    const { ipcRenderer } = require('electron');
 
-  document.getElementById("transfer").onclick = async () => {
-    const url = document.getElementById("playlist").value;
+    // UI Feedback Helpers
+    function setStepActive(stepId) {
+        const el = document.getElementById(stepId);
+        el.classList.remove('opacity-40');
+        el.classList.add('active', 'border-red-100');
+    }
 
-    await ipcRenderer.invoke("transfer-playlist", url);
-  };
+    function setStatus(id, type, message) {
+        const el = document.getElementById(id);
+        const dot = el.querySelector('.status-dot') || el.querySelector('div');
+        const text = el.querySelector('.status-text') || el.querySelector('span');
+        
+        text.innerText = message;
+        
+        // Reset classes
+        dot.className = 'w-1.5 h-1.5 rounded-full transition-all';
+        text.className = 'transition-all';
+        
+        if (type === 'success') {
+            dot.classList.add('bg-green-500', 'shadow-[0_0_8px_rgba(34,197,94,0.5)]');
+            text.classList.add('text-green-600', 'font-medium');
+        } else if (type === 'error') {
+            dot.classList.add('bg-red-500');
+            text.classList.add('text-red-500');
+        } else if (type === 'loading') {
+            dot.classList.add('bg-blue-500', 'animate-pulse');
+            text.classList.add('text-blue-500');
+        } else {
+            dot.classList.add('bg-slate-300');
+            text.classList.add('text-slate-400', 'italic');
+        }
+    }
 
-  ipcRenderer.on("progress", (_, data) => {
-    document.getElementById("progress").innerText =
-      `${data.current} / ${data.total}`;
-  });
+    async function loadAccounts() {
+        const select = document.getElementById('account-select');
+        select.innerHTML = '<option value="">Pilih Akun Tersimpan...</option>';
+        const accounts = await ipcRenderer.invoke('get-accounts');
+        accounts.forEach(acc => {
+            const opt = document.createElement('option');
+            opt.value = acc;
+            opt.textContent = acc;
+            select.appendChild(opt);
+        });
+    }
+
+    document.getElementById('account-select').onchange = (e) => {
+        const val = e.target.value;
+        if (val) {
+            setStatus('login-status', 'success', `Aktif: ${val}`);
+            document.getElementById('transfer').disabled = false;
+            setStepActive('card-3');
+        } else {
+            setStatus('login-status', 'default', 'Belum ada akun yang terhubung');
+            document.getElementById('transfer').disabled = true;
+        }
+    };
+
+    // Step 1: Credentials
+    document.getElementById('load-creds').onclick = async () => {
+        const statusEl = document.getElementById('creds-status');
+        statusEl.innerHTML = '<div class="custom-loader"></div> <span class="text-blue-500 font-medium">Membuka file...</span>';
+
+        const res = await ipcRenderer.invoke('load-credentials');
+        
+        if (res.success || res.alreadyExists) {
+            statusEl.innerHTML = '<div class="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]"></div> <span class="text-green-600 font-bold">API Aktif</span>';
+            document.getElementById('login').disabled = false;
+            setStepActive('card-1');
+            setStepActive('card-2');
+            await loadAccounts();
+        } else {
+            statusEl.innerHTML = '<div class="w-1.5 h-1.5 rounded-full bg-slate-300"></div> <span class="text-slate-400">Gagal memuat</span>';
+        }
+    };
+
+    // Step 2: Login
+    document.getElementById('login').onclick = async () => {
+        setStatus('login-status', 'loading', 'Menunggu otorisasi browser...');
+        await ipcRenderer.invoke('login-google');
+    };
+
+    ipcRenderer.on('login-success', async (_, accountName) => {
+        await loadAccounts();
+        document.getElementById('account-select').value = accountName;
+        document.getElementById('account-select').dispatchEvent(new Event('change'));
+    });
+
+    // Step 3: Transfer
+    document.getElementById('transfer').onclick = async () => {
+        const url = document.getElementById('playlist').value.trim();
+        if (!url) return; 
+        
+        const accountName = document.getElementById('account-select').value;
+        const progressContainer = document.getElementById('progress-container');
+        const transferBtn = document.getElementById('transfer');
+        
+        progressContainer.classList.remove('hidden');
+        transferBtn.disabled = true;
+        transferBtn.querySelector('span').innerText = 'Memproses Transfer...';
+        
+        try {
+            await ipcRenderer.invoke('transfer-playlist', { url, accountName });
+            document.getElementById('progress-text').innerText = 'Selesai!';
+            document.getElementById('progress-text').classList.add('text-green-600');
+            document.getElementById('progress-bar').style.width = '100%';
+            transferBtn.querySelector('span').innerText = 'Selesai! ✨';
+        } catch (err) {
+            document.getElementById('progress-text').innerText = 'Gagal';
+            document.getElementById('progress-text').classList.add('text-red-500');
+            transferBtn.querySelector('span').innerText = 'Coba Lagi';
+        }
+        transferBtn.disabled = false;
+    };
+
+    ipcRenderer.on('progress', (_, data) => {
+        const percent = Math.round((data.current / data.total) * 100);
+        document.getElementById('progress-detail').innerText = `${data.current} dari ${data.total} video`;
+        document.getElementById('progress-percent').innerText = `${percent}%`;
+        document.getElementById('progress-bar').style.width = `${percent}%`;
+    });
+    
+    // Auto-load logic
+    window.onload = async () => {
+        const fs = require('fs');
+        if (fs.existsSync('credentials.json')) {
+            const statusEl = document.getElementById('creds-status');
+            statusEl.innerHTML = '<div class="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]"></div> <span class="text-green-600 font-bold">API Aktif</span>';
+            document.getElementById('login').disabled = false;
+            setStepActive('card-1');
+            setStepActive('card-2');
+            await loadAccounts();
+        }
+    };
 </script>
-  </body>
+</body>
 </html>
