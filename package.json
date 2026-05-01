@@ -6,6 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "electron .",
+    "convert-icon": "node scripts/convert-icon.js",
+    "predist": "npm run convert-icon",
     "dist": "electron-builder"
   },
   "keywords": [],
@@ -18,12 +20,16 @@
   },
   "devDependencies": {
     "electron": "^41.4.0",
-    "electron-builder": "^26.8.1"
+    "electron-builder": "^26.8.1",
+    "png-to-ico": "^3.0.1",
+    "sharp": "^0.34.5"
   },
   "build": {
     "appId": "com.playlistsync.app",
+    "icon": "assets/icon.ico",
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "assets/icon.ico"
     },
     "directories": {
       "output": "dist"
