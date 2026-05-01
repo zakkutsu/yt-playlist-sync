@@ -489,11 +489,50 @@
         transferBtn.querySelector("[data-i18n]").innerText = t("processing");
 
         try {
-          await ipcRenderer.invoke("transfer-playlist", { url, accountName, customName });
-          document.getElementById("progress-text").innerText = t("doneLabel");
-          document.getElementById("progress-text").classList.add("text-green-600");
+          // Tangkap hasil dari backend
+          const result = await ipcRenderer.invoke("transfer-playlist", { url, accountName, customName });
           document.getElementById("progress-bar").style.width = "100%";
-          transferBtn.querySelector("[data-i18n]").innerText = t("done");
+
+          // Hapus kotak error lama jika ada
+          const oldErrorBox = document.getElementById("error-box");
+          if (oldErrorBox) oldErrorBox.remove();
+
+          if (result && result.status === "partial") {
+            // JIKA ADA VIDEO YANG GAGAL
+            document.getElementById("progress-text").innerText = "Selesai (Ada Error)";
+            document.getElementById("progress-text").classList.replace("text-slate-500", "text-amber-500");
+            document.getElementById("progress-detail").innerText = `${result.failed.length} video gagal ditransfer.`;
+            document.getElementById("progress-detail").classList.add("text-amber-600");
+            
+            // Buat kotak UI untuk menampilkan daftar video gagal
+            let errorHtml = `
+              <div id="error-box" class="mt-4 max-h-32 overflow-y-auto text-[11px] bg-red-50 p-4 rounded-2xl border border-red-100 animate-in fade-in slide-in-from-top-2">
+                <p class="font-bold text-red-600 mb-2 uppercase tracking-wider">Video Gagal (${result.failed.length}):</p>
+                <ul class="space-y-1 text-red-500 font-mono">
+            `;
+            
+            result.failed.forEach(v => {
+              // Menampilkan ID dan memotong pesan error jika terlalu panjang
+              const shortReason = v.reason.length > 50 ? v.reason.substring(0, 50) + "..." : v.reason;
+              errorHtml += `<li>• ${v.videoId} <span class="opacity-60 text-red-400">- ${shortReason}</span></li>`;
+            });
+            
+            errorHtml += `</ul></div>`;
+            
+            // Masukkan kotak error ke dalam UI
+            document.getElementById("progress-container").insertAdjacentHTML('beforeend', errorHtml);
+            
+            transferBtn.querySelector("[data-i18n]").innerText = t("done");
+            showToast("warning", "Transfer Selesai", "Beberapa video gagal ditransfer.");
+
+          } else {
+            // JIKA SUKSES 100%
+            document.getElementById("progress-text").innerText = t("doneLabel");
+            document.getElementById("progress-text").classList.add("text-green-600");
+            transferBtn.querySelector("[data-i18n]").innerText = t("done");
+            showToast("success", "Transfer Selesai", "Semua video berhasil ditransfer!");
+          }
+
         } catch (err) {
           document.getElementById("progress-text").innerText = t("failed");
 

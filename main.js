@@ -312,6 +312,8 @@ ipcMain.handle(
       const newId = newPlaylist.data.id;
 
       // INSERT video satu per satu
+      let failedVideos = [];
+
       for (let i = 0; i < videos.length; i++) {
         const vid = videos[i].snippet.resourceId.videoId;
 
@@ -334,8 +336,14 @@ ipcMain.handle(
             total: videos.length,
           });
         } catch (err) {
-          console.log("ERROR VIDEO:", vid);
-          console.log(err.message);
+          console.log("ERROR VIDEO:", vid, err.message);
+
+          // Simpan data video yang gagal (hapus koma di pesan agar CSV-friendly)
+          failedVideos.push({
+            videoId: vid,
+            reason: (err.message || "").replace(/,/g, ""),
+          });
+
           if (err.message && err.message.toLowerCase().includes("quota")) {
             throw new Error(
               "Google Cloud daily API quota exceeded during transfer. Resume tomorrow.",
@@ -345,11 +353,16 @@ ipcMain.handle(
           continue;
         }
 
-        // delay kecil biar aman
+        // Delay 1 detik untuk mencegah diblokir server Google karena spam
         await new Promise((r) => setTimeout(r, 1000));
       }
 
-      return "done";
+      // KEMBALIKAN HASILNYA KE FRONTEND
+      if (failedVideos.length > 0) {
+        return { status: "partial", failed: failedVideos };
+      }
+
+      return { status: "success" };
     } catch (err) {
       if (err.message && err.message.toLowerCase().includes("quota")) {
         throw new Error(
