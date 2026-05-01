@@ -1,8 +1,8 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
-const { google } = require('googleapis');
-const open = (...args) => import('open').then(mod => mod.default(...args));
-const http = require('http');
-const fs = require('fs');
+const { app, BrowserWindow, ipcMain, dialog } = require("electron");
+const { google } = require("googleapis");
+const open = (...args) => import("open").then((mod) => mod.default(...args));
+const http = require("http");
+const fs = require("fs");
 
 let win;
 
@@ -12,73 +12,75 @@ function createWindow() {
     height: 600,
     webPreferences: {
       nodeIntegration: true,
-      contextIsolation: false
-    }
+      contextIsolation: false,
+    },
   });
 
-  win.loadFile('index.html');
+  win.loadFile("index.html");
 }
 
 app.whenReady().then(createWindow);
 
 // LOAD CREDENTIALS HANDLER
-ipcMain.handle('load-credentials', async () => {
+ipcMain.handle("load-credentials", async () => {
   const { canceled, filePaths } = await dialog.showOpenDialog(win, {
-    title: 'Pilih credentials.json',
-    filters: [{ name: 'JSON', extensions: ['json'] }],
-    properties: ['openFile']
+    title: "Pilih credentials.json",
+    filters: [{ name: "JSON", extensions: ["json"] }],
+    properties: ["openFile"],
   });
 
   if (canceled || filePaths.length === 0) return { success: false };
 
   try {
     const filePath = filePaths[0];
-    const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-    
+    const data = JSON.parse(fs.readFileSync(filePath, "utf8"));
+
     if (!data.installed || !data.installed.client_id) {
-      return { success: false, error: 'File tidak valid! Pastikan itu file OAuth Desktop App.' };
+      return {
+        success: false,
+        error: "File tidak valid! Pastikan itu file OAuth Desktop App.",
+      };
     }
 
-    fs.copyFileSync(filePath, 'credentials.json');
+    fs.copyFileSync(filePath, "credentials.json");
     return { success: true };
   } catch (err) {
-    return { success: false, error: 'Gagal membaca file JSON: ' + err.message };
+    return { success: false, error: "Gagal membaca file JSON: " + err.message };
   }
 });
 
 // GET ACCOUNTS HANDLER
-ipcMain.handle('get-accounts', () => {
-  if (!fs.existsSync('tokens')) {
-    fs.mkdirSync('tokens');
+ipcMain.handle("get-accounts", () => {
+  if (!fs.existsSync("tokens")) {
+    fs.mkdirSync("tokens");
     return [];
   }
-  const files = fs.readdirSync('tokens').filter(f => f.endsWith('.json'));
-  return files.map(f => f.replace('.json', ''));
+  const files = fs.readdirSync("tokens").filter((f) => f.endsWith(".json"));
+  return files.map((f) => f.replace(".json", ""));
 });
 
 // LOGIN HANDLER
-ipcMain.handle('login-google', async () => {
-  const credentials = JSON.parse(fs.readFileSync('credentials.json'));
-  const { client_id, client_secret, redirect_uris } =
-    credentials.installed;
+ipcMain.handle("login-google", async () => {
+  const credentials = JSON.parse(fs.readFileSync("credentials.json"));
+  const { client_id, client_secret, redirect_uris } = credentials.installed;
 
   const oAuth2Client = new google.auth.OAuth2(
     client_id,
     client_secret,
-    'http://localhost:5000'
+    "http://localhost:5000",
   );
 
   const authUrl = oAuth2Client.generateAuthUrl({
-    access_type: 'offline',
-    scope: ['https://www.googleapis.com/auth/youtube'],
-    prompt: 'consent'
+    access_type: "offline",
+    scope: ["https://www.googleapis.com/auth/youtube"],
+    prompt: "consent",
   });
 
   // LOCAL SERVER
   const server = http
     .createServer(async (req, res) => {
-      const url = new URL(req.url, 'http://localhost:5000');
-      const code = url.searchParams.get('code');
+      const url = new URL(req.url, "http://localhost:5000");
+      const code = url.searchParams.get("code");
 
       if (code) {
         const successHtml = `<!DOCTYPE html>
@@ -170,33 +172,38 @@ ipcMain.handle('login-google', async () => {
     </script>
 </body>
 </html>`;
-        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
         res.end(successHtml);
 
         const { tokens } = await oAuth2Client.getToken(code);
         oAuth2Client.setCredentials(tokens);
 
         // Get channel name
-        const youtube = google.youtube({ version: 'v3', auth: oAuth2Client });
-        let accountName = 'Akun_' + Date.now();
+        const youtube = google.youtube({ version: "v3", auth: oAuth2Client });
+        let accountName = "Akun_" + Date.now();
         try {
-          const channelRes = await youtube.channels.list({ part: 'snippet', mine: true });
+          const channelRes = await youtube.channels.list({
+            part: "snippet",
+            mine: true,
+          });
           if (channelRes.data.items && channelRes.data.items.length > 0) {
-            accountName = channelRes.data.items[0].snippet.title.replace(/[^a-zA-Z0-9_ -]/g, '').trim();
-            if (!accountName) accountName = 'Akun_' + Date.now();
+            accountName = channelRes.data.items[0].snippet.title
+              .replace(/[^a-zA-Z0-9_ -]/g, "")
+              .trim();
+            if (!accountName) accountName = "Akun_" + Date.now();
           }
         } catch (e) {
           console.error("Gagal mendapatkan nama channel", e);
         }
 
-        if (!fs.existsSync('tokens')) {
-          fs.mkdirSync('tokens');
+        if (!fs.existsSync("tokens")) {
+          fs.mkdirSync("tokens");
         }
 
         fs.writeFileSync(`tokens/${accountName}.json`, JSON.stringify(tokens));
 
         server.close();
-        
+
         // Menunggu 5 detik (sesuai countdown di browser) sebelum kembali ke app
         setTimeout(() => {
           if (win) {
@@ -205,8 +212,8 @@ ipcMain.handle('login-google', async () => {
             win.focus();
             win.setAlwaysOnTop(true);
             setTimeout(() => win.setAlwaysOnTop(false), 1000);
-            
-            win.webContents.send('login-success', accountName);
+
+            win.webContents.send("login-success", accountName);
           }
         }, 5000);
       }
@@ -216,127 +223,135 @@ ipcMain.handle('login-google', async () => {
   await open(authUrl);
 });
 
-ipcMain.handle('transfer-playlist', async (event, { url: playlistUrl, accountName }) => {
-  try {
-    const credentials = JSON.parse(fs.readFileSync('credentials.json'));
-    const token = JSON.parse(fs.readFileSync(`tokens/${accountName}.json`));
-
-    const { client_id, client_secret, redirect_uris } = credentials.installed;
-
-    const auth = new google.auth.OAuth2(
-      client_id,
-      client_secret,
-      redirect_uris[0]
-    );
-
-    auth.setCredentials(token);
-
-    const youtube = google.youtube({ version: 'v3', auth });
-
-    // Extract playlist ID
-    let playlistId = playlistUrl;
+ipcMain.handle(
+  "transfer-playlist",
+  async (event, { url: playlistUrl, accountName }) => {
     try {
-      const parsedUrl = new URL(playlistUrl);
-      if (parsedUrl.searchParams.has('list')) {
-        playlistId = parsedUrl.searchParams.get('list');
-      }
-    } catch(e) {
-      // Kalau gagal parsing URL (mungkin user paste ID langsung atau URL jelek)
-      if (playlistUrl.includes('list=')) {
-        playlistId = playlistUrl.split('list=')[1].split('&')[0];
-      }
-    }
+      const credentials = JSON.parse(fs.readFileSync("credentials.json"));
+      const token = JSON.parse(fs.readFileSync(`tokens/${accountName}.json`));
 
-    // GET source playlist details (untuk mengambil namanya)
-    let sourcePlaylistTitle = 'Imported Playlist';
-    try {
-      const plRes = await youtube.playlists.list({
-        part: 'snippet',
-        id: playlistId
-      });
-      if (plRes.data.items && plRes.data.items.length > 0) {
-        sourcePlaylistTitle = plRes.data.items[0].snippet.title;
-      }
-    } catch (err) {
-      console.error('Gagal mendapatkan nama playlist sumber:', err.message);
-      if (err.message && err.message.toLowerCase().includes('quota')) {
-        throw new Error("Kuota API harian Google Cloud habis. Silakan coba lagi besok.");
-      }
-    }
+      const { client_id, client_secret, redirect_uris } = credentials.installed;
 
-  // GET videos
-  let videos = [];
-  let nextPageToken = null;
+      const auth = new google.auth.OAuth2(
+        client_id,
+        client_secret,
+        redirect_uris[0],
+      );
 
-  do {
-    const res = await youtube.playlistItems.list({
-      part: 'snippet',
-      playlistId,
-      maxResults: 50,
-      pageToken: nextPageToken
-    });
+      auth.setCredentials(token);
 
-    videos.push(...res.data.items);
-    nextPageToken = res.data.nextPageToken;
-  } while (nextPageToken);
+      const youtube = google.youtube({ version: "v3", auth });
 
-  // CREATE playlist baru
-  const newPlaylist = await youtube.playlists.insert({
-    part: 'snippet,status',
-    requestBody: {
-      snippet: {
-        title: sourcePlaylistTitle
-      },
-      status: {
-        privacyStatus: 'private'
-      }
-    }
-  });
-
-  const newId = newPlaylist.data.id;
-
-  // INSERT video satu per satu
-for (let i = 0; i < videos.length; i++) {
-  const vid = videos[i].snippet.resourceId.videoId;
-
-  try {
-    await youtube.playlistItems.insert({
-      part: 'snippet',
-      requestBody: {
-        snippet: {
-          playlistId: newId,
-          resourceId: {
-            kind: 'youtube#video',
-            videoId: vid
-          }
+      // Extract playlist ID
+      let playlistId = playlistUrl;
+      try {
+        const parsedUrl = new URL(playlistUrl);
+        if (parsedUrl.searchParams.has("list")) {
+          playlistId = parsedUrl.searchParams.get("list");
+        }
+      } catch (e) {
+        // Kalau gagal parsing URL (mungkin user paste ID langsung atau URL jelek)
+        if (playlistUrl.includes("list=")) {
+          playlistId = playlistUrl.split("list=")[1].split("&")[0];
         }
       }
-    });
 
-    win.webContents.send('progress', {
-      current: i + 1,
-      total: videos.length
-    });
-
+      // GET source playlist details (untuk mengambil namanya)
+      let sourcePlaylistTitle = "Imported Playlist";
+      try {
+        const plRes = await youtube.playlists.list({
+          part: "snippet",
+          id: playlistId,
+        });
+        if (plRes.data.items && plRes.data.items.length > 0) {
+          sourcePlaylistTitle = plRes.data.items[0].snippet.title;
+        }
       } catch (err) {
-        console.log("ERROR VIDEO:", vid);
-        console.log(err.message);
-        if (err.message && err.message.toLowerCase().includes('quota')) {
-          throw new Error("Kuota API harian Google Cloud habis saat proses transfer. Lanjutkan besok.");
+        console.error("Gagal mendapatkan nama playlist sumber:", err.message);
+        if (err.message && err.message.toLowerCase().includes("quota")) {
+          throw new Error(
+            "Kuota API harian Google Cloud habis. Silakan coba lagi besok.",
+          );
         }
-        // skip dan lanjut
-        continue;
       }
 
-      // delay kecil biar aman
-      await new Promise(r => setTimeout(r, 200));
-    }
+      // GET videos
+      let videos = [];
+      let nextPageToken = null;
 
-    return 'done';
-  } catch (err) {
-    if (err.message && err.message.toLowerCase().includes('quota')) {
-       throw new Error("Kuota API harian Google Cloud Anda (10.000 unit/hari) telah habis. Limit ini di-reset tiap tengah malam waktu US.");
+      do {
+        const res = await youtube.playlistItems.list({
+          part: "snippet",
+          playlistId,
+          maxResults: 50,
+          pageToken: nextPageToken,
+        });
+
+        videos.push(...res.data.items);
+        nextPageToken = res.data.nextPageToken;
+      } while (nextPageToken);
+
+      // CREATE playlist baru
+      const newPlaylist = await youtube.playlists.insert({
+        part: "snippet,status",
+        requestBody: {
+          snippet: {
+            title: sourcePlaylistTitle,
+          },
+          status: {
+            privacyStatus: "private",
+          },
+        },
+      });
+
+      const newId = newPlaylist.data.id;
+
+      // INSERT video satu per satu
+      for (let i = 0; i < videos.length; i++) {
+        const vid = videos[i].snippet.resourceId.videoId;
+
+        try {
+          await youtube.playlistItems.insert({
+            part: "snippet",
+            requestBody: {
+              snippet: {
+                playlistId: newId,
+                resourceId: {
+                  kind: "youtube#video",
+                  videoId: vid,
+                },
+              },
+            },
+          });
+
+          win.webContents.send("progress", {
+            current: i + 1,
+            total: videos.length,
+          });
+        } catch (err) {
+          console.log("ERROR VIDEO:", vid);
+          console.log(err.message);
+          if (err.message && err.message.toLowerCase().includes("quota")) {
+            throw new Error(
+              "Kuota API harian Google Cloud habis saat proses transfer. Lanjutkan besok.",
+            );
+          }
+          // skip dan lanjut
+          continue;
+        }
+
+        // delay kecil biar aman
+        await new Promise((r) => setTimeout(r, 200));
+      }
+
+      return "done";
+    } catch (err) {
+      if (err.message && err.message.toLowerCase().includes("quota")) {
+        throw new Error(
+          "Kuota API harian Google Cloud Anda (10.000 unit/hari) telah habis. Limit ini di-reset tiap tengah malam waktu US.",
+        );
+      }
+      throw err;
     }
-    throw err;
-  }
-});
+  },
+);
