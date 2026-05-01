@@ -56,14 +56,14 @@ npm start
 
 Aplikasi ini menggunakan konsep **Bring Your Own Credentials (BYOC)**. Setiap pengguna **wajib** membuat project di Google Cloud masing-masing.
 
-**BUKAN:** "Satu credentials dibagi ke banyak user" (Akan cepat kena _limit global_)
-**YANG BENAR:** "Setiap user bikin credentials sendiri"
+**BUKAN:** "Satu credentials dibagikan ke banyak pengguna" (Akan cepat terkena _limit global_)
+**YANG BENAR:** "Setiap pengguna membuat credentials sendiri"
 
 **Keuntungan sistem ini:**
 
-1. **Kuota Tidak Bentrok:** Tiap user memiliki jatah API 10.000 unit/hari secara mandiri.
+1. **Kuota Tidak Bentrok:** Setiap pengguna memiliki jatah API 10.000 unit/hari secara mandiri.
 2. **Tidak Ada Limit Global:** Aplikasi bisa dipakai banyak orang tanpa khawatir terkena bottleneck.
-3. **Lebih Aman:** Tidak ada _shared credential_. Jika satu user mengalami error, tidak akan mengganggu pengguna lain.
+3. **Lebih Aman:** Tidak ada _shared credential_. Jika satu pengguna mengalami error, tidak akan mengganggu pengguna lain.
 
 ---
 
@@ -106,7 +106,7 @@ Karena sistem yang sangat _scalable_ di atas, setup awal menjadi tanggung jawab 
     - Klik **Add Users**
     - Masukkan email akun yang akan login (akun tujuan / akun B)
     - Klik **Save**
-  - **Catatan Penting**: Kalau tidak ada menu test user, berarti status Anda _In Production_. Solusinya, klik _Back to testing_.
+  - **Catatan Penting**: Jika menu **Test Users** tidak tersedia, berarti status Anda _In Production_. Solusinya, klik _Back to testing_.
 
 **5. Buat OAuth Client ID**
 
@@ -127,7 +127,7 @@ Kalau semua langkah benar, maka:
 - API sudah aktif
 - OAuth selesai dibuat
 - File `credentials.json` siap digunakan
-- Test user sudah ditambahkan (jika dalam status testing)
+- Test Users sudah ditambahkan (jika dalam status testing)
 
 ## Cara Pakai & Login
 
@@ -155,6 +155,18 @@ Hasil:
 - Tidak bisa transfer video private
 - Tidak bisa ambil playlist private
 - Bergantung pada quota API Google
+
+### Catatan Kuota API (Penting)
+
+Setiap pengguna memang mendapat kuota default **10.000 unit/hari**, tetapi setiap aksi API memiliki "biaya" tersendiri:
+
+- Baca isi playlist (`playlistItems.list`) = **1 unit**
+- Buat playlist baru (`playlists.insert`) = **50 unit**
+- Tambah 1 video ke playlist (`playlistItems.insert`) = **50 unit / video**
+
+Karena proses tambah video memakan kuota paling besar, batas real transfer per hari biasanya ada di kisaran **190-198 video**.
+
+Jadi kalau proses berhenti di sekitar angka 190-an dan muncul **Quota Exceeded (Error 403)**, itu normal. Lanjutkan lagi setelah kuota harian reset di hari berikutnya.
 
 ## Roadmap (Next Upgrade)
 
