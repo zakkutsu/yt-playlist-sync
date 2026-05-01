@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="id">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -94,7 +94,7 @@
         >
       </div>
       <p class="text-slate-500 text-sm font-medium">
-        Pindahkan koleksi video YouTube antar akun tanpa ribet.
+        Transfer your YouTube playlist collection between accounts, hassle-free.
       </p>
     </header>
 
@@ -109,13 +109,13 @@
             <div>
               <span
                 class="inline-block px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-[10px] font-bold uppercase tracking-wider mb-2"
-                >Langkah 01</span
+                >Step 01</span
               >
-              <h2 class="text-xl font-bold">Akses API Google Cloud</h2>
+              <h2 class="text-xl font-bold">Google Cloud API Access</h2>
               <p class="text-slate-400 text-sm mt-1">
-                Muat file
+                Load your
                 <code class="text-red-500 font-mono">credentials.json</code>
-                dari project Anda.
+                file from your Google Cloud project.
               </p>
             </div>
           </div>
@@ -138,14 +138,14 @@
                   d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                 />
               </svg>
-              Muat Credentials
+              Load Credentials
             </button>
             <div
               id="creds-status"
               class="flex items-center gap-2 text-sm text-slate-400 transition-all duration-300"
             >
               <div class="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
-              <span>Menunggu file...</span>
+              <span>Waiting for file...</span>
             </div>
           </div>
         </section>
@@ -159,11 +159,11 @@
             <div>
               <span
                 class="inline-block px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-[10px] font-bold uppercase tracking-wider mb-2"
-                >Langkah 02</span
+                >Step 02</span
               >
-              <h2 class="text-xl font-bold">Otorisasi Akun</h2>
+              <h2 class="text-xl font-bold">Account Authorization</h2>
               <p class="text-slate-400 text-sm mt-1">
-                Pilih atau tambahkan akun YouTube tujuan transfer.
+                Select or add a destination YouTube account for the transfer.
               </p>
             </div>
           </div>
@@ -174,7 +174,7 @@
                 id="account-select"
                 class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-red-500 transition-all appearance-none cursor-pointer"
               >
-                <option value="">Pilih Akun Tersimpan...</option>
+                <option value="">Select Saved Account...</option>
               </select>
             </div>
             <div class="sm:col-span-2">
@@ -196,7 +196,7 @@
                     d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                   />
                 </svg>
-                Akun Baru
+                New Account
               </button>
             </div>
           </div>
@@ -208,7 +208,7 @@
               class="status-dot w-1.5 h-1.5 rounded-full bg-slate-300 transition-all"
             ></div>
             <span class="status-text italic"
-              >Belum ada akun yang terhubung</span
+              >No account connected yet</span
             >
           </div>
         </section>
@@ -222,11 +222,11 @@
             <div>
               <span
                 class="inline-block px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-[10px] font-bold uppercase tracking-wider mb-2"
-                >Langkah 03</span
+                >Step 03</span
               >
-              <h2 class="text-xl font-bold text-slate-800">Mulai Transfer</h2>
+              <h2 class="text-xl font-bold text-slate-800">Start Transfer</h2>
               <p class="text-slate-400 text-sm mt-1">
-                Masukkan URL playlist asal untuk memproses video.
+                Enter the source playlist URL to begin processing.
               </p>
             </div>
           </div>
@@ -293,13 +293,13 @@
                       id="progress-text"
                       class="text-xs font-bold text-slate-500 uppercase tracking-widest"
                     >
-                      Sedang Memproses
+                      Processing
                     </p>
                     <p
                       id="progress-detail"
                       class="text-sm font-semibold text-slate-700"
                     >
-                      0 video dari 0
+                      0 of 0 videos
                     </p>
                   </div>
                   <span
@@ -366,7 +366,7 @@
 
       async function loadAccounts() {
         const select = document.getElementById("account-select");
-        select.innerHTML = '<option value="">Pilih Akun Tersimpan...</option>';
+        select.innerHTML = '<option value="">Select Saved Account...</option>';
         const accounts = await ipcRenderer.invoke("get-accounts");
         accounts.forEach((acc) => {
           const opt = document.createElement("option");
@@ -379,11 +379,11 @@
       document.getElementById("account-select").onchange = (e) => {
         const val = e.target.value;
         if (val) {
-          setStatus("login-status", "success", `Aktif: ${val}`);
+          setStatus("login-status", "success", `Active: ${val}`);
           document.getElementById("transfer").disabled = false;
           setStepActive("card-3");
         } else {
-          setStatus("login-status", "default", "Belum ada akun yang terhubung");
+          setStatus("login-status", "default", "No account connected yet");
           document.getElementById("transfer").disabled = true;
         }
       };
@@ -392,26 +392,26 @@
       document.getElementById("load-creds").onclick = async () => {
         const statusEl = document.getElementById("creds-status");
         statusEl.innerHTML =
-          '<div class="custom-loader"></div> <span class="text-blue-500 font-medium">Membuka file...</span>';
+          '<div class="custom-loader"></div> <span class="text-blue-500 font-medium">Opening file...</span>';
 
         const res = await ipcRenderer.invoke("load-credentials");
 
         if (res.success || res.alreadyExists) {
           statusEl.innerHTML =
-            '<div class="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]"></div> <span class="text-green-600 font-bold">API Aktif</span>';
+            '<div class="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]"></div> <span class="text-green-600 font-bold">API Active</span>';
           document.getElementById("login").disabled = false;
           setStepActive("card-1");
           setStepActive("card-2");
           await loadAccounts();
         } else {
           statusEl.innerHTML =
-            '<div class="w-1.5 h-1.5 rounded-full bg-slate-300"></div> <span class="text-slate-400">Gagal memuat</span>';
+            '<div class="w-1.5 h-1.5 rounded-full bg-slate-300"></div> <span class="text-slate-400">Failed to load</span>';
         }
       };
 
       // Step 2: Login
       document.getElementById("login").onclick = async () => {
-        setStatus("login-status", "loading", "Menunggu otorisasi browser...");
+        setStatus("login-status", "loading", "Waiting for browser authorization...");
         await ipcRenderer.invoke("login-google");
       };
 
@@ -427,13 +427,13 @@
       document.getElementById("transfer").onclick = async () => {
         const url = document.getElementById("playlist").value.trim();
         if (!url) {
-          showToast("warning", "URL Kosong", "Masukkan link playlist YouTube terlebih dahulu.");
+          showToast("warning", "URL Required", "Please enter a YouTube playlist URL first.");
           return;
         }
 
         const accountName = document.getElementById("account-select").value;
         if (!accountName) {
-          showToast("warning", "Akun Belum Dipilih", "Pilih atau tambahkan akun YouTube di Langkah 02.");
+          showToast("warning", "No Account Selected", "Please select or add a YouTube account in Step 02.");
           return;
         }
 
@@ -443,20 +443,20 @@
 
         progressContainer.classList.remove("hidden");
         transferBtn.disabled = true;
-        transferBtn.querySelector("span").innerText = "Memproses Transfer...";
+        transferBtn.querySelector("span").innerText = "Processing Transfer...";
 
         try {
           await ipcRenderer.invoke("transfer-playlist", { url, accountName });
-          document.getElementById("progress-text").innerText = "Selesai!";
+          document.getElementById("progress-text").innerText = "Done!";
           document
             .getElementById("progress-text")
             .classList.add("text-green-600");
           document.getElementById("progress-bar").style.width = "100%";
-          transferBtn.querySelector("span").innerText = "Selesai! ✨";
+          transferBtn.querySelector("span").innerText = "Done! ✨";
         } catch (err) {
-          document.getElementById("progress-text").innerText = "Gagal";
+          document.getElementById("progress-text").innerText = "Failed";
 
-          let errorMsg = err.message || "Terjadi kesalahan";
+          let errorMsg = err.message || "An error occurred";
           if (errorMsg.includes("Error: ")) {
             errorMsg = errorMsg.split("Error: ")[1];
           }
@@ -468,7 +468,7 @@
           document
             .getElementById("progress-text")
             .classList.add("text-red-500");
-          transferBtn.querySelector("span").innerText = "Coba Lagi";
+          transferBtn.querySelector("span").innerText = "Try Again";
         }
         transferBtn.disabled = false;
       };
@@ -476,7 +476,7 @@
       ipcRenderer.on("progress", (_, data) => {
         const percent = Math.round((data.current / data.total) * 100);
         document.getElementById("progress-detail").innerText =
-          `${data.current} dari ${data.total} video`;
+          `${data.current} of ${data.total} videos`;
         document.getElementById("progress-percent").innerText = `${percent}%`;
         document.getElementById("progress-bar").style.width = `${percent}%`;
       });
@@ -487,7 +487,7 @@
         if (fs.existsSync("credentials.json")) {
           const statusEl = document.getElementById("creds-status");
           statusEl.innerHTML =
-            '<div class="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]"></div> <span class="text-green-600 font-bold">API Aktif</span>';
+            '<div class="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]"></div> <span class="text-green-600 font-bold">API Active</span>';
           document.getElementById("login").disabled = false;
           setStepActive("card-1");
           setStepActive("card-2");

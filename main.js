@@ -25,7 +25,7 @@ app.whenReady().then(createWindow);
 // LOAD CREDENTIALS HANDLER
 ipcMain.handle("load-credentials", async () => {
   const { canceled, filePaths } = await dialog.showOpenDialog(win, {
-    title: "Pilih credentials.json",
+    title: "Select credentials.json",
     filters: [{ name: "JSON", extensions: ["json"] }],
     properties: ["openFile"],
   });
@@ -39,14 +39,14 @@ ipcMain.handle("load-credentials", async () => {
     if (!data.installed || !data.installed.client_id) {
       return {
         success: false,
-        error: "File tidak valid! Pastikan itu file OAuth Desktop App.",
+        error: "Invalid file! Make sure it's an OAuth Desktop App file.",
       };
     }
 
     fs.copyFileSync(filePath, "credentials.json");
     return { success: true };
   } catch (err) {
-    return { success: false, error: "Gagal membaca file JSON: " + err.message };
+    return { success: false, error: "Failed to read JSON file: " + err.message };
   }
 });
 
@@ -89,7 +89,7 @@ ipcMain.handle("login-google", async () => {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Otentikasi Berhasil - PlaylistSync</title>
+    <title>Authentication Successful - PlaylistSync</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -135,14 +135,14 @@ ipcMain.handle("login-google", async () => {
             </svg>
         </div>
 
-        <h1 class="text-2xl font-extrabold text-slate-900 mb-3">Login Berhasil!</h1>
+        <h1 class="text-2xl font-extrabold text-slate-900 mb-3">Login Successful!</h1>
         <p class="text-slate-500 text-sm leading-relaxed mb-8">
-            Akun YouTube Anda telah berhasil terhubung. Proses sinkronisasi sedang berjalan di latar belakang.
+            Your YouTube account has been successfully connected. The sync process is running in the background.
         </p>
 
         <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100 mb-8">
-            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Instruksi Selanjutnya</p>
-            <p class="text-sm text-slate-700 font-medium italic">"Jendela browser ini akan tertutup secara otomatis."</p>
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Next Step</p>
+            <p class="text-sm text-slate-700 font-medium italic">"This browser window will close automatically."</p>
         </div>
 
         <div class="flex items-center justify-center gap-2 text-xs font-semibold text-slate-400">
@@ -150,7 +150,7 @@ ipcMain.handle("login-google", async () => {
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            Kembali ke aplikasi dalam <span id="countdown" class="text-red-500 font-bold text-sm">5</span> detik...
+            Returning to app in <span id="countdown" class="text-red-500 font-bold text-sm">5</span> seconds...
         </div>
     </div>
 
@@ -194,7 +194,7 @@ ipcMain.handle("login-google", async () => {
             if (!accountName) accountName = "Akun_" + Date.now();
           }
         } catch (e) {
-          console.error("Gagal mendapatkan nama channel", e);
+          console.error("Failed to get channel name", e);
         }
 
         if (!fs.existsSync("tokens")) {
@@ -268,10 +268,10 @@ ipcMain.handle(
           sourcePlaylistTitle = plRes.data.items[0].snippet.title;
         }
       } catch (err) {
-        console.error("Gagal mendapatkan nama playlist sumber:", err.message);
+        console.error("Failed to get source playlist name:", err.message);
         if (err.message && err.message.toLowerCase().includes("quota")) {
           throw new Error(
-            "Kuota API harian Google Cloud habis. Silakan coba lagi besok.",
+            "Google Cloud daily API quota exceeded. Please try again tomorrow.",
           );
         }
       }
@@ -334,7 +334,7 @@ ipcMain.handle(
           console.log(err.message);
           if (err.message && err.message.toLowerCase().includes("quota")) {
             throw new Error(
-              "Kuota API harian Google Cloud habis saat proses transfer. Lanjutkan besok.",
+              "Google Cloud daily API quota exceeded during transfer. Resume tomorrow.",
             );
           }
           // skip dan lanjut
@@ -349,7 +349,7 @@ ipcMain.handle(
     } catch (err) {
       if (err.message && err.message.toLowerCase().includes("quota")) {
         throw new Error(
-          "Kuota API harian Google Cloud Anda (10.000 unit/hari) telah habis. Limit ini di-reset tiap tengah malam waktu US.",
+          "Your Google Cloud daily API quota (10,000 units/day) has been exhausted. This limit resets every midnight US time.",
         );
       }
       throw err;
