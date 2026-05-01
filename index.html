@@ -262,6 +262,14 @@
             transferBtn.querySelector('span').innerText = 'Selesai! ✨';
         } catch (err) {
             document.getElementById('progress-text').innerText = 'Gagal';
+            
+            let errorMsg = err.message || 'Terjadi kesalahan';
+            if (errorMsg.includes('Error: ')) {
+                errorMsg = errorMsg.split('Error: ')[1];
+            }
+            
+            document.getElementById('progress-detail').innerText = errorMsg;
+            document.getElementById('progress-detail').classList.add('text-red-500');
             document.getElementById('progress-text').classList.add('text-red-500');
             transferBtn.querySelector('span').innerText = 'Coba Lagi';
         }

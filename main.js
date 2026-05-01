@@ -217,48 +217,52 @@ ipcMain.handle('login-google', async () => {
 });
 
 ipcMain.handle('transfer-playlist', async (event, { url: playlistUrl, accountName }) => {
-  const credentials = JSON.parse(fs.readFileSync('credentials.json'));
-  const token = JSON.parse(fs.readFileSync(`tokens/${accountName}.json`));
-
-  const { client_id, client_secret, redirect_uris } = credentials.installed;
-
-  const auth = new google.auth.OAuth2(
-    client_id,
-    client_secret,
-    redirect_uris[0]
-  );
-
-  auth.setCredentials(token);
-
-  const youtube = google.youtube({ version: 'v3', auth });
-
-  // Extract playlist ID
-  let playlistId = playlistUrl;
   try {
-    const parsedUrl = new URL(playlistUrl);
-    if (parsedUrl.searchParams.has('list')) {
-      playlistId = parsedUrl.searchParams.get('list');
-    }
-  } catch(e) {
-    // Kalau gagal parsing URL (mungkin user paste ID langsung atau URL jelek)
-    if (playlistUrl.includes('list=')) {
-      playlistId = playlistUrl.split('list=')[1].split('&')[0];
-    }
-  }
+    const credentials = JSON.parse(fs.readFileSync('credentials.json'));
+    const token = JSON.parse(fs.readFileSync(`tokens/${accountName}.json`));
 
-  // GET source playlist details (untuk mengambil namanya)
-  let sourcePlaylistTitle = 'Imported Playlist';
-  try {
-    const plRes = await youtube.playlists.list({
-      part: 'snippet',
-      id: playlistId
-    });
-    if (plRes.data.items && plRes.data.items.length > 0) {
-      sourcePlaylistTitle = plRes.data.items[0].snippet.title;
+    const { client_id, client_secret, redirect_uris } = credentials.installed;
+
+    const auth = new google.auth.OAuth2(
+      client_id,
+      client_secret,
+      redirect_uris[0]
+    );
+
+    auth.setCredentials(token);
+
+    const youtube = google.youtube({ version: 'v3', auth });
+
+    // Extract playlist ID
+    let playlistId = playlistUrl;
+    try {
+      const parsedUrl = new URL(playlistUrl);
+      if (parsedUrl.searchParams.has('list')) {
+        playlistId = parsedUrl.searchParams.get('list');
+      }
+    } catch(e) {
+      // Kalau gagal parsing URL (mungkin user paste ID langsung atau URL jelek)
+      if (playlistUrl.includes('list=')) {
+        playlistId = playlistUrl.split('list=')[1].split('&')[0];
+      }
     }
-  } catch (err) {
-    console.error('Gagal mendapatkan nama playlist sumber:', err);
-  }
+
+    // GET source playlist details (untuk mengambil namanya)
+    let sourcePlaylistTitle = 'Imported Playlist';
+    try {
+      const plRes = await youtube.playlists.list({
+        part: 'snippet',
+        id: playlistId
+      });
+      if (plRes.data.items && plRes.data.items.length > 0) {
+        sourcePlaylistTitle = plRes.data.items[0].snippet.title;
+      }
+    } catch (err) {
+      console.error('Gagal mendapatkan nama playlist sumber:', err.message);
+      if (err.message && err.message.toLowerCase().includes('quota')) {
+        throw new Error("Kuota API harian Google Cloud habis. Silakan coba lagi besok.");
+      }
+    }
 
   // GET videos
   let videos = [];
@@ -314,17 +318,25 @@ for (let i = 0; i < videos.length; i++) {
       total: videos.length
     });
 
+      } catch (err) {
+        console.log("ERROR VIDEO:", vid);
+        console.log(err.message);
+        if (err.message && err.message.toLowerCase().includes('quota')) {
+          throw new Error("Kuota API harian Google Cloud habis saat proses transfer. Lanjutkan besok.");
+        }
+        // skip dan lanjut
+        continue;
+      }
+
+      // delay kecil biar aman
+      await new Promise(r => setTimeout(r, 200));
+    }
+
+    return 'done';
   } catch (err) {
-    console.log("ERROR VIDEO:", vid);
-    console.log(err.message);
-
-    // skip dan lanjut
-    continue;
+    if (err.message && err.message.toLowerCase().includes('quota')) {
+       throw new Error("Kuota API harian Google Cloud Anda (10.000 unit/hari) telah habis. Limit ini di-reset tiap tengah malam waktu US.");
+    }
+    throw err;
   }
-
-  // delay kecil biar aman
-  await new Promise(r => setTimeout(r, 200));
-}
-
-  return 'done';
 });
