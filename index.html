@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <h1>YT Playlist Transfer</h1>
+
+    <button id="login">Login Google</button>
+
+    <p id="status"></p>
+
+    <input id="playlist" placeholder="Paste playlist URL" />
+    <button id="transfer">Start Transfer</button>
+
+    <div id="progress"></div>
+<script>
+  const { ipcRenderer } = require('electron');
+
+  document.getElementById("transfer").onclick = async () => {
+    const url = document.getElementById("playlist").value;
+
+    await ipcRenderer.invoke("transfer-playlist", url);
+  };
+
+  ipcRenderer.on("progress", (_, data) => {
+    document.getElementById("progress").innerText =
+      `${data.current} / ${data.total}`;
+  });
+</script>
+  </body>
+</html>
