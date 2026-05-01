@@ -312,7 +312,8 @@ ipcMain.handle(
       const newId = newPlaylist.data.id;
 
       // INSERT video satu per satu
-      let failedVideos = [];
+      let successCount = 0;
+      let failedCount = 0;
 
       for (let i = 0; i < videos.length; i++) {
         const vid = videos[i].snippet.resourceId.videoId;
@@ -331,17 +332,29 @@ ipcMain.handle(
             },
           });
 
+          // Jika sukses, tambah counter dan kirim status "success"
+          successCount++;
           win.webContents.send("progress", {
             current: i + 1,
             total: videos.length,
+            videoId: vid,
+            status: "success",
+            successCount,
+            failedCount,
           });
         } catch (err) {
           console.log("ERROR VIDEO:", vid, err.message);
 
-          // Simpan data video yang gagal (hapus koma di pesan agar CSV-friendly)
-          failedVideos.push({
+          // Jika gagal, tambah counter dan kirim status "error"
+          failedCount++;
+          win.webContents.send("progress", {
+            current: i + 1,
+            total: videos.length,
             videoId: vid,
+            status: "error",
             reason: (err.message || "").replace(/,/g, ""),
+            successCount,
+            failedCount,
           });
 
           if (err.message && err.message.toLowerCase().includes("quota")) {
@@ -353,16 +366,12 @@ ipcMain.handle(
           continue;
         }
 
-        // Delay 1 detik untuk mencegah diblokir server Google karena spam
+        // DELAY 1 DETIK: Ini kunci utama agar video tidak tercegat Google!
         await new Promise((r) => setTimeout(r, 1000));
       }
 
-      // KEMBALIKAN HASILNYA KE FRONTEND
-      if (failedVideos.length > 0) {
-        return { status: "partial", failed: failedVideos };
-      }
-
-      return { status: "success" };
+      // KEMBALIKAN TOTAL HASILNYA
+      return { status: "done", successCount, failedCount };
     } catch (err) {
       if (err.message && err.message.toLowerCase().includes("quota")) {
         throw new Error(
@@ -373,3 +382,22 @@ ipcMain.handle(
     }
   },
 );
+
+// Save failed videos list to file (invoked from renderer)
+ipcMain.handle("save-failed-list", async (event, { failed }) => {
+  try {
+    const { canceled, filePath } = await dialog.showSaveDialog(win, {
+      title: "Save failed videos list",
+      defaultPath: `failed-videos-${Date.now()}.json`,
+      filters: [{ name: "JSON", extensions: ["json"] }],
+    });
+
+    if (canceled || !filePath) return { success: false };
+
+    fs.writeFileSync(filePath, JSON.stringify(failed, null, 2), "utf8");
+    return { success: true, path: filePath };
+  } catch (err) {
+    console.error("Failed to save failed list:", err);
+    return { success: false, error: err.message };
+  }
+});
