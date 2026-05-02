@@ -17,7 +17,7 @@ Seluruh proses didukung progress real-time, log per video, serta ekspor daftar v
 
 ## Unduh
 
-- **[Download PlaylistSync (Latest)](https://github.com/zakkutsu/yt-playlist-sync/releases/latest/download/playlistsync.Setup.1.0.0.exe)**
+- **[Download PlaylistSync (Latest)](https://github.com/zakkutsu/yt-playlist-sync/releases/latest)**
 
 Persyaratan sistem:
 
