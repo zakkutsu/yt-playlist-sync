@@ -47,4 +47,32 @@ module.exports = {
   playlistName:     "Playlist Name (Optional)",
   playlistNameDesc: "Leave blank to use the original playlist name",
   playlistNamePlaceholder: "Enter custom playlist name...",
+
+  // Tab navigation
+  tabSyncPlaylist:      "Sync Playlist",
+  tabSaveLinks:         "Save Links",
+  tabSyncDesc:          "Transfer entire playlist from one account to another",
+  tabLinksDesc:         "Save multiple links into one playlist",
+
+  // Save Links mode
+  destPlaylist:         "Destination Playlist",
+  linksLabel:           "Links List",
+  linksTextarea:        "Paste links here (one per line)...",
+  linksCreateNew:       "Create New Playlist",
+  linksUseExisting:     "Use Existing Playlist",
+  selectPlaylist:       "Select a playlist...",
+  btnSaveLinks:         "Save Links to Playlist",
+  newPlaylistName:      "New Playlist Name",
+
+  // Log and Toast additions
+  logTitle:             "Transfer Log",
+  logStats:             (s, f) => `Success: ${s} | Failed: ${f}`,
+  toastTransferDone:    "Transfer Completed",
+  toastTransferPartial: (s, f) => `${s} Succeeded, ${f} Failed.`,
+  toastTransferAll:     "All videos successfully transferred!",
+  toastLinksDone:       "Save Links Completed",
+  toastLinksPartial:    (s, f) => `${s} Succeeded, ${f} Failed.`,
+  toastLinksAll:        "All links successfully saved!",
+  toastNeedLink:        "Please enter links",
+  toastNeedPlaylist:    "Please select a playlist"
 };

@@ -47,4 +47,32 @@ module.exports = {
   playlistName:     "Nama Playlist (Opsional)",
   playlistNameDesc: "Biarkan kosong untuk menggunakan nama playlist asli",
   playlistNamePlaceholder: "Masukkan nama playlist custom...",
+
+  // Tab navigation
+  tabSyncPlaylist:      "Sinkron Playlist",
+  tabSaveLinks:         "Simpan Links",
+  tabSyncDesc:          "Transfer seluruh playlist dari satu akun ke akun lain",
+  tabLinksDesc:         "Simpan banyak link ke satu playlist",
+
+  // Save Links mode
+  destPlaylist:         "Playlist Tujuan",
+  linksLabel:           "Daftar Link",
+  linksTextarea:        "Tempel link di sini (satu per baris)...",
+  linksCreateNew:       "Buat Playlist Baru",
+  linksUseExisting:     "Gunakan Playlist Lama",
+  selectPlaylist:       "Pilih playlist...",
+  btnSaveLinks:         "Simpan Links ke Playlist",
+  newPlaylistName:      "Nama Playlist Baru",
+
+  // Log and Toast additions
+  logTitle:             "Log Transfer",
+  logStats:             (s, f) => `Berhasil: ${s} | Gagal: ${f}`,
+  toastTransferDone:    "Transfer Selesai",
+  toastTransferPartial: (s, f) => `${s} Berhasil, ${f} Gagal.`,
+  toastTransferAll:     "Semua video berhasil ditransfer!",
+  toastLinksDone:       "Simpan Links Selesai",
+  toastLinksPartial:    (s, f) => `${s} Berhasil, ${f} Gagal.`,
+  toastLinksAll:        "Semua link berhasil disimpan!",
+  toastNeedLink:        "Silakan masukkan link",
+  toastNeedPlaylist:    "Silakan pilih playlist"
 };

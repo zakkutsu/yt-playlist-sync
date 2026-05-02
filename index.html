@@ -121,6 +121,15 @@
     </header>
 
     <main class="max-w-2xl mx-auto px-4 pb-20">
+      <!-- Tab Navigation -->
+      <div class="flex gap-3 mb-6 border-b border-slate-200">
+        <button id="tab-sync" class="tab-btn active px-6 py-3 font-semibold text-sm border-b-2 border-red-600 text-slate-900" data-i18n="tabSyncPlaylist"></button>
+        <button id="tab-links" class="tab-btn px-6 py-3 font-semibold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-600 transition-colors" data-i18n="tabSaveLinks"></button>
+      </div>
+
+      <!-- Tab descriptions -->
+      <p id="tab-desc" class="text-slate-500 text-xs mb-4" data-i18n="tabSyncDesc"></p>
+
       <div class="grid gap-6">
         <!-- Step 1: Credentials -->
         <section
@@ -225,18 +234,15 @@
         >
           <div class="flex items-start justify-between mb-6">
             <div>
-              <span
-                class="inline-block px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-[10px] font-bold uppercase tracking-wider mb-2"
-                >Step 03</span
-              >
-              <h2 class="text-xl font-bold text-slate-800">Start Transfer</h2>
-              <p class="text-slate-400 text-sm mt-1">
-                Enter the source playlist URL to begin processing.
-              </p>
+              <span class="inline-block px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-[10px] font-bold uppercase tracking-wider mb-2" data-i18n="step03"></span>
+              <h2 class="text-xl font-bold text-slate-800" data-i18n="step03Title"></h2>
+              <p class="text-slate-400 text-sm mt-1" data-i18n="step03Desc"></p>
             </div>
           </div>
 
           <div class="space-y-5">
+              <!-- Sync Mode Content -->
+              <div id="sync-content" class="space-y-5">
             <div class="relative group">
               <input
                 id="playlist"
@@ -263,7 +269,23 @@
               </div>
             </div>
 
-            <div class="space-y-2">
+            <!-- Destination Playlist Mode -->
+            <div class="space-y-3">
+              <label class="block text-sm font-semibold text-slate-700" data-i18n="destPlaylist"></label>
+              <div class="flex items-center gap-4">
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="sync-mode" id="sync-mode-new" value="new" checked class="w-4 h-4 cursor-pointer" />
+                  <span class="text-sm" data-i18n="linksCreateNew"></span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="sync-mode" id="sync-mode-existing" value="existing" class="w-4 h-4 cursor-pointer" />
+                  <span class="text-sm" data-i18n="linksUseExisting"></span>
+                </label>
+              </div>
+            </div>
+
+            <!-- New playlist name (shown when mode=new) -->
+            <div id="sync-new-playlist-input" class="space-y-2">
               <label class="block text-sm font-semibold text-slate-700" data-i18n="playlistName"></label>
               <p class="text-xs text-slate-500" data-i18n="playlistNameDesc"></p>
               <input
@@ -272,6 +294,29 @@
                 class="input-focus w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm outline-none focus:border-red-500 transition-all"
                 data-i18n-placeholder="playlistNamePlaceholder"
               />
+            </div>
+
+            <!-- Existing playlist dropdown (shown when mode=existing) -->
+            <div id="sync-existing-playlist-select" class="hidden space-y-2">
+              <label class="block text-sm font-semibold text-slate-700" data-i18n="selectPlaylist"></label>
+              <div class="flex gap-2">
+                <select
+                  id="sync-playlist-select"
+                  class="input-focus flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm outline-none focus:border-red-500 transition-all"
+                >
+                  <option value="">Select a playlist...</option>
+                </select>
+                <button
+                  id="sync-refresh-playlists"
+                  title="Refresh playlist list"
+                  onclick="loadSyncPlaylistsDropdown()"
+                  class="shrink-0 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-2xl px-4 py-3 text-slate-500 hover:text-slate-700 transition-all"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                  </svg>
+                </button>
+              </div>
             </div>
 
             <button
@@ -294,6 +339,99 @@
                 />
               </svg>
             </button>
+              </div>
+
+              <!-- Save Links Mode Content -->
+              <div id="links-content" class="hidden space-y-5">
+                <div class="space-y-2">
+                  <label class="block text-sm font-semibold text-slate-700" data-i18n="linksLabel"></label>
+                  <textarea
+                    id="links-textarea"
+                    class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-mono outline-none focus:border-red-500 transition-all resize-none h-24"
+                    data-i18n-placeholder="linksTextarea"
+                  ></textarea>
+                </div>
+
+                <div class="space-y-3">
+                  <label class="block text-sm font-semibold text-slate-700">Playlist</label>
+                  <div class="flex items-center gap-4">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="playlist-mode"
+                        id="mode-new"
+                        value="new"
+                        checked
+                        class="w-4 h-4 cursor-pointer"
+                      />
+                      <span class="text-sm" data-i18n="linksCreateNew"></span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="playlist-mode"
+                        id="mode-existing"
+                        value="existing"
+                        class="w-4 h-4 cursor-pointer"
+                      />
+                      <span class="text-sm" data-i18n="linksUseExisting"></span>
+                    </label>
+                  </div>
+                </div>
+
+                <div id="new-playlist-input" class="space-y-2">
+                  <label class="block text-sm font-semibold text-slate-700" data-i18n="newPlaylistName"></label>
+                  <input
+                    id="new-playlist-name"
+                    type="text"
+                    class="input-focus w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm outline-none focus:border-red-500 transition-all"
+                    placeholder="My Saved Links"
+                  />
+                </div>
+
+                <div id="existing-playlist-select" class="hidden space-y-2">
+                  <label class="block text-sm font-semibold text-slate-700" data-i18n="selectPlaylist"></label>
+                  <div class="flex gap-2">
+                    <select
+                      id="playlist-select"
+                      class="input-focus flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm outline-none focus:border-red-500 transition-all"
+                    >
+                      <option value="">Select a playlist...</option>
+                    </select>
+                    <button
+                      id="refresh-playlists"
+                      title="Refresh playlist list"
+                      onclick="loadPlaylistsForDropdown()"
+                      class="shrink-0 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-2xl px-4 py-3 text-slate-500 hover:text-slate-700 transition-all"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  id="save-links"
+                  disabled
+                  class="w-full bg-red-600 hover:bg-red-700 text-white py-4 rounded-2xl font-bold text-base shadow-xl shadow-red-100 transition-all active:scale-[0.98] disabled:opacity-30 disabled:shadow-none flex items-center justify-center gap-3 group"
+                >
+                  <span data-i18n="btnSaveLinks"></span>
+                  <svg
+                    class="w-5 h-5 group-hover:translate-x-1 transition-transform"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M17 8l4 4m0 0l-4 4m4-4H3"
+                    />
+                  </svg>
+                </button>
+              </div>
 
             <!-- Progress Indicator -->
             <div
@@ -307,7 +445,6 @@
                   <div class="space-y-1">
                     <p id="progress-text" class="text-xs font-bold text-slate-500 uppercase tracking-widest" data-i18n="progressProcessing"></p>
                     <p id="progress-detail" class="text-sm font-semibold text-slate-700">0</p>
-                    </p>
                   </div>
                   <span
                     id="progress-percent"
@@ -348,10 +485,12 @@
 
       function applyLang() {
         document.querySelectorAll("[data-i18n]").forEach((el) => {
-          el.innerHTML = t(el.dataset.i18n);
+          const val = t(el.dataset.i18n);
+          el.innerHTML = typeof val === "undefined" ? el.dataset.i18n : val;
         });
         document.querySelectorAll("[data-i18n-opt]").forEach((el) => {
-          el.textContent = t(el.dataset.i18nOpt);
+          const v = t(el.dataset.i18nOpt);
+          el.textContent = typeof v === "undefined" ? el.dataset.i18nOpt : v;
         });
         document.getElementById("btn-en").classList.toggle("active", currentLang === "en");
         document.getElementById("btn-id").classList.toggle("active", currentLang === "id");
@@ -363,6 +502,9 @@
         localStorage.setItem("lang", lang);
         applyLang();
         updatePlaceholders();
+        // Refresh tab description in the active language
+        const desc = activeTab === "sync" ? t("tabSyncDesc") : t("tabLinksDesc");
+        document.getElementById("tab-desc").innerText = desc;
       }
 
       function updatePlaceholders() {
@@ -370,6 +512,124 @@
           el.placeholder = t(el.dataset.i18nPlaceholder);
         });
       }
+      // ────────────────────────────────────────────────────────
+      // Tab Management
+      let activeTab = "sync";
+
+      function switchTab(tab) {
+        activeTab = tab;
+        localStorage.setItem("activeTab", tab);
+
+        // Update tab buttons
+        const syncBtn = document.getElementById("tab-sync");
+        const linksBtn = document.getElementById("tab-links");
+
+        if (tab === "sync") {
+          syncBtn.classList.add("border-red-600", "text-slate-900");
+          syncBtn.classList.remove("border-transparent", "text-slate-400");
+          linksBtn.classList.remove("border-red-600", "text-slate-900");
+          linksBtn.classList.add("border-transparent", "text-slate-400");
+        } else {
+          linksBtn.classList.add("border-red-600", "text-slate-900");
+          linksBtn.classList.remove("border-transparent", "text-slate-400");
+          syncBtn.classList.remove("border-red-600", "text-slate-900");
+          syncBtn.classList.add("border-transparent", "text-slate-400");
+        }
+
+        // Update description
+        const desc = tab === "sync" ? t("tabSyncDesc") : t("tabLinksDesc");
+        document.getElementById("tab-desc").innerText = desc;
+
+        // Show/hide relevant inputs
+        const syncContent = document.getElementById("sync-content");
+        const linksContent = document.getElementById("links-content");
+
+        if (tab === "sync") {
+          syncContent.classList.remove("hidden");
+          linksContent.classList.add("hidden");
+        } else {
+          syncContent.classList.add("hidden");
+          linksContent.classList.remove("hidden");
+          // Load playlists for dropdown
+          loadPlaylistsForDropdown();
+        }
+      }
+
+      async function loadPlaylistsForDropdown() {
+        const accountName = document.getElementById("account-select").value;
+        const select = document.getElementById("playlist-select");
+
+        if (!accountName) {
+          showToast("warning", t("toastAccTitle"), t("toastAccMsg"));
+          return;
+        }
+
+        select.innerHTML = `<option value="">⏳ Loading playlists...</option>`;
+        select.disabled = true;
+
+        try {
+          const res = await ipcRenderer.invoke("get-user-playlists", { accountName });
+          if (res && res.success && res.playlists.length > 0) {
+            select.innerHTML = `<option value="">${t("selectPlaylist")}</option>`;
+            res.playlists.forEach((p) => {
+              const opt = document.createElement("option");
+              opt.value = p.id;
+              opt.textContent = p.title;
+              select.appendChild(opt);
+            });
+          } else if (res && res.success && res.playlists.length === 0) {
+            select.innerHTML = `<option value="">⚠️ No playlists found on this account</option>`;
+          } else {
+            select.innerHTML = `<option value="">❌ Failed to load — try again</option>`;
+            showToast("error", "Load Failed", res.error || "Could not fetch playlists.");
+          }
+        } catch (err) {
+          select.innerHTML = `<option value="">❌ Error: ${err.message}</option>`;
+          showToast("error", "Load Failed", err.message);
+        } finally {
+          select.disabled = false;
+        }
+      }
+
+      async function loadSyncPlaylistsDropdown() {
+        const accountName = document.getElementById("account-select").value;
+        const select = document.getElementById("sync-playlist-select");
+
+        if (!accountName) {
+          showToast("warning", t("toastAccTitle"), t("toastAccMsg"));
+          return;
+        }
+
+        select.innerHTML = `<option value="">⏳ Loading playlists...</option>`;
+        select.disabled = true;
+
+        try {
+          const res = await ipcRenderer.invoke("get-user-playlists", { accountName });
+          if (res && res.success && res.playlists.length > 0) {
+            select.innerHTML = `<option value="">${t("selectPlaylist")}</option>`;
+            res.playlists.forEach((p) => {
+              const opt = document.createElement("option");
+              opt.value = p.id;
+              opt.textContent = p.title;
+              select.appendChild(opt);
+            });
+          } else if (res && res.success && res.playlists.length === 0) {
+            select.innerHTML = `<option value="">⚠️ No playlists found on this account</option>`;
+          } else {
+            select.innerHTML = `<option value="">❌ Failed to load — try again</option>`;
+            showToast("error", "Load Failed", res.error || "Could not fetch playlists.");
+          }
+        } catch (err) {
+          select.innerHTML = `<option value="">❌ Error: ${err.message}</option>`;
+          showToast("error", "Load Failed", err.message);
+        } finally {
+          select.disabled = false;
+        }
+      }
+
+      // Tab button event listeners
+      document.getElementById("tab-sync").onclick = () => switchTab("sync");
+      document.getElementById("tab-links").onclick = () => switchTab("links");
       // ────────────────────────────────────────────────────────
 
       // UI Feedback Helpers
@@ -426,10 +686,12 @@
         if (val) {
           setStatus("login-status", "success", t("active", val));
           document.getElementById("transfer").disabled = false;
+          document.getElementById("save-links").disabled = false;
           setStepActive("card-3");
         } else {
           setStatus("login-status", "default", t("noAccount"));
           document.getElementById("transfer").disabled = true;
+          document.getElementById("save-links").disabled = true;
         }
       };
 
@@ -465,6 +727,11 @@
           .dispatchEvent(new Event("change"));
       });
 
+      ipcRenderer.on("login-error", (_, message) => {
+        setStatus("login-status", "error", "Login failed — " + message);
+        showToast("error", "Login Failed", message);
+      });
+
       // Step 3: Transfer
       document.getElementById("transfer").onclick = async () => {
         const url = document.getElementById("playlist").value.trim();
@@ -479,7 +746,17 @@
           return;
         }
 
+        const syncMode = document.querySelector("input[name='sync-mode']:checked").value;
         const customName = document.getElementById("custom-playlist-name").value.trim();
+        let targetPlaylistId = "";
+
+        if (syncMode === "existing") {
+          targetPlaylistId = document.getElementById("sync-playlist-select").value;
+          if (!targetPlaylistId) {
+            showToast("warning", t("selectPlaylist"), t("toastNeedPlaylist"));
+            return;
+          }
+        }
         const progressContainer = document.getElementById("progress-container");
         const transferBtn = document.getElementById("transfer");
 
@@ -487,44 +764,34 @@
         transferBtn.disabled = true;
         transferBtn.querySelector("[data-i18n]").innerText = t("processing");
 
-        // --- BUAT UI KOTAK LOG SECARA DINAMIS ---
-        let logBox = document.getElementById("transfer-log-box");
-        if (!logBox) {
-          progressContainer.insertAdjacentHTML('beforeend', `
-            <div id="transfer-log-box" class="mt-5 bg-slate-900 rounded-2xl p-4 overflow-hidden flex flex-col h-48 shadow-inner animate-in fade-in slide-in-from-top-2">
-              <div class="flex justify-between items-center text-xs font-bold text-slate-400 mb-3 uppercase tracking-wider border-b border-slate-700 pb-2">
-                <span>Transfer Log</span>
-                <span id="log-stats" class="bg-slate-800 px-2 py-1 rounded-md">Berhasil: 0 | Gagal: 0</span>
-              </div>
-              <div id="transfer-log-content" class="overflow-y-auto flex-1 text-[11px] font-mono space-y-1 pr-2 pb-1 scroll-smooth"></div>
-            </div>
-          `);
-        } else {
-          // Reset log jika di-klik ulang
-          document.getElementById("transfer-log-content").innerHTML = "";
-          document.getElementById("log-stats").innerText = "Berhasil: 0 | Gagal: 0";
-        }
+        ensureLogBox(progressContainer);
 
         try {
-          const result = await ipcRenderer.invoke("transfer-playlist", { url, accountName, customName });
+          const result = await ipcRenderer.invoke("transfer-playlist", { url, accountName, customName, targetPlaylistId });
 
           document.getElementById("progress-bar").style.width = "100%";
 
           if (result.failedCount > 0) {
-            document.getElementById("progress-text").innerText = "Selesai (Ada Error)";
+            document.getElementById("progress-text").innerText = t("doneLabel");
             document.getElementById("progress-text").classList.replace("text-slate-500", "text-amber-500");
             transferBtn.querySelector("[data-i18n]").innerText = t("done");
-            showToast("warning", "Transfer Selesai", `${result.successCount} Berhasil, ${result.failedCount} Gagal.`);
+            showToast("warning", t("toastTransferDone"), t("toastTransferPartial", result.successCount, result.failedCount));
           } else {
             document.getElementById("progress-text").innerText = t("doneLabel");
             document.getElementById("progress-text").classList.add("text-green-600");
             transferBtn.querySelector("[data-i18n]").innerText = t("done");
-            showToast("success", "Transfer Selesai", "Semua video berhasil ditransfer!");
+            showToast("success", t("toastTransferDone"), t("toastTransferAll"));
           }
         } catch (err) {
           document.getElementById("progress-text").innerText = t("failed");
           let errorMsg = err.message || t("errorOccurred");
           if (errorMsg.includes("Error: ")) errorMsg = errorMsg.split("Error: ")[1];
+
+          // Session expired — prompt re-login
+          if (errorMsg.startsWith("SESSION_EXPIRED:")) {
+            errorMsg = errorMsg.replace("SESSION_EXPIRED: ", "");
+            showToast("error", "Session Expired", "Please re-login in Step 02.");
+          }
 
           document.getElementById("progress-detail").innerText = errorMsg;
           document.getElementById("progress-detail").classList.add("text-red-500");
@@ -545,21 +812,18 @@
         const logStats = document.getElementById("log-stats");
 
         if (logContent && logStats) {
-          // Update status atas
-          logStats.innerText = `Berhasil: ${data.successCount} | Gagal: ${data.failedCount}`;
+          logStats.innerText = t("logStats", data.successCount, data.failedCount);
 
-          // Buat baris log baru
-          let logLine = "";
           let idPadding = data.current.toString().padStart(data.total.toString().length, "0");
+          let logLine = "";
 
           if (data.status === "success") {
-            logLine = `<div class="text-green-400">><span class="text-slate-500 ml-1 mr-2">[${idPadding}/${data.total}]</span> ID: ${data.videoId} <span class="text-slate-500">........</span> SUKSES</div>`;
+            logLine = `<div class="text-green-400">><span class="text-slate-500 ml-1 mr-2">[${idPadding}/${data.total}]</span> ID: ${data.videoId} <span class="text-slate-500">........</span> OK</div>`;
           } else {
             let shortReason = data.reason.length > 40 ? data.reason.substring(0, 40) + "..." : data.reason;
-            logLine = `<div class="text-red-400">><span class="text-slate-500 ml-1 mr-2">[${idPadding}/${data.total}]</span> ID: ${data.videoId} <span class="text-slate-500">........</span> GAGAL (${shortReason})</div>`;
+            logLine = `<div class="text-red-400">><span class="text-slate-500 ml-1 mr-2">[${idPadding}/${data.total}]</span> ID: ${data.videoId} <span class="text-slate-500">........</span> FAIL (${shortReason})</div>`;
           }
 
-          // Masukkan ke dalam kotak dan scroll otomatis ke bawah
           logContent.insertAdjacentHTML('beforeend', logLine);
           logContent.scrollTop = logContent.scrollHeight;
         }
@@ -567,9 +831,137 @@
 
       // Auto-load logic
       window.onload = async () => {
+        // Sync Playlist mode radio handlers
+        document.getElementById("sync-mode-new").onchange = () => {
+          document.getElementById("sync-new-playlist-input").classList.remove("hidden");
+          document.getElementById("sync-existing-playlist-select").classList.add("hidden");
+        };
+
+        document.getElementById("sync-mode-existing").onchange = () => {
+          document.getElementById("sync-new-playlist-input").classList.add("hidden");
+          document.getElementById("sync-existing-playlist-select").classList.remove("hidden");
+          loadSyncPlaylistsDropdown();
+        };
+
+        // Mode radio button handlers (Save Links)
+        document.getElementById("mode-new").onchange = () => {
+          document.getElementById("new-playlist-input").classList.remove("hidden");
+          document.getElementById("existing-playlist-select").classList.add("hidden");
+        };
+
+        document.getElementById("mode-existing").onchange = () => {
+          document.getElementById("new-playlist-input").classList.add("hidden");
+          document.getElementById("existing-playlist-select").classList.remove("hidden");
+          // Always (re)load playlists when user picks this option
+          loadPlaylistsForDropdown();
+        };
+
+        // Helper: create or reset the terminal log box
+        window.ensureLogBox = function(container) {
+          let logBox = document.getElementById("transfer-log-box");
+          if (!logBox) {
+            container.insertAdjacentHTML('beforeend', `
+              <div id="transfer-log-box" class="mt-5 bg-slate-900 rounded-2xl p-4 overflow-hidden flex flex-col h-48 shadow-inner animate-in fade-in slide-in-from-top-2">
+                <div class="flex justify-between items-center text-xs font-bold text-slate-400 mb-3 uppercase tracking-widest border-b border-slate-700 pb-2">
+                  <span id="log-title">${t("logTitle")}</span>
+                  <span id="log-stats" class="bg-slate-800 px-2 py-1 rounded-md">${t("logStats", 0, 0)}</span>
+                </div>
+                <div id="transfer-log-content" class="overflow-y-auto flex-1 text-[11px] font-mono space-y-1 pr-2 pb-1 scroll-smooth"></div>
+              </div>
+            `);
+          } else {
+            document.getElementById("transfer-log-content").innerHTML = "";
+            document.getElementById("log-stats").innerText = t("logStats", 0, 0);
+            document.getElementById("log-title").innerText = t("logTitle");
+          }
+        };
+
+        // Save Links button handler
+        document.getElementById("save-links").onclick = async () => {
+          const linksText = document.getElementById("links-textarea").value.trim();
+          if (!linksText) {
+            showToast("warning", t("toastUrlTitle"), t("toastNeedLink"));
+            return;
+          }
+
+          const accountName = document.getElementById("account-select").value;
+          if (!accountName) {
+            showToast("warning", t("toastAccTitle"), t("toastAccMsg"));
+            return;
+          }
+
+          const mode = document.querySelector("input[name='playlist-mode']:checked").value;
+          let playlistName = "", playlistId = "";
+
+          if (mode === "new") {
+            playlistName = document.getElementById("new-playlist-name").value.trim() || "Saved Links";
+          } else {
+            playlistId = document.getElementById("playlist-select").value;
+            if (!playlistId) {
+              showToast("warning", t("selectPlaylist"), t("toastNeedPlaylist"));
+              return;
+            }
+          }
+
+          const progressContainer = document.getElementById("progress-container");
+          const saveBtn = document.getElementById("save-links");
+
+          progressContainer.classList.remove("hidden");
+          saveBtn.disabled = true;
+
+          ensureLogBox(progressContainer);
+
+          try {
+            const result = await ipcRenderer.invoke("save-bulk-links", {
+              linksText,
+              accountName,
+              mode,
+              playlistName,
+              playlistId,
+            });
+
+            document.getElementById("progress-bar").style.width = "100%";
+
+            if (result.failedCount > 0) {
+              document.getElementById("progress-text").innerText = t("doneLabel");
+              document.getElementById("progress-text").classList.replace("text-slate-500", "text-amber-500");
+              saveBtn.querySelector("[data-i18n]").innerText = t("done");
+              showToast("warning", t("toastLinksDone"), t("toastLinksPartial", result.successCount, result.failedCount));
+            } else {
+              document.getElementById("progress-text").innerText = t("doneLabel");
+              document.getElementById("progress-text").classList.add("text-green-600");
+              saveBtn.querySelector("[data-i18n]").innerText = t("done");
+              showToast("success", t("toastLinksDone"), t("toastLinksAll"));
+            }
+          } catch (err) {
+            document.getElementById("progress-text").innerText = t("failed");
+            let errorMsg = err.message || t("errorOccurred");
+            if (errorMsg.includes("Error: ")) errorMsg = errorMsg.split("Error: ")[1];
+
+            // Session expired — prompt re-login
+            if (errorMsg.startsWith("SESSION_EXPIRED:")) {
+              errorMsg = errorMsg.replace("SESSION_EXPIRED: ", "");
+              showToast("error", "Session Expired", "Please re-login in Step 02.");
+            }
+
+            document.getElementById("progress-detail").innerText = errorMsg;
+            document.getElementById("progress-detail").classList.add("text-red-500");
+            document.getElementById("progress-text").classList.add("text-red-500");
+            saveBtn.querySelector("[data-i18n]").innerText = t("tryAgain");
+          }
+          saveBtn.disabled = false;
+        };
+
         applyLang();
         updatePlaceholders();
         const fs = require("fs");
+
+        // Initialize tab mode
+        activeTab = localStorage.getItem("activeTab") || "sync";
+        if (activeTab === "links") {
+          switchTab("links");
+        }
+
         if (fs.existsSync("credentials.json")) {
           const statusEl = document.getElementById("creds-status");
           statusEl.innerHTML = `<div class="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]"></div> <span class="text-green-600 font-bold">${t("apiActive")}</span>`;
@@ -579,6 +971,7 @@
           await loadAccounts();
         }
       };
+
       function showToast(type, title, message) {
         const toast = document.getElementById("toast");
         const icons = {

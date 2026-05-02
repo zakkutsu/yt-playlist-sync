@@ -83,6 +83,15 @@ ipcMain.handle("login-google", async () => {
     .createServer(async (req, res) => {
       const url = new URL(req.url, "http://localhost:5000");
       const code = url.searchParams.get("code");
+      const error = url.searchParams.get("error");
+
+      if (error) {
+        res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+        res.end(`<html><body><h2>Login cancelled: ${error}</h2><p>You can close this window.</p></body></html>`);
+        server.close();
+        if (win) win.webContents.send("login-error", error);
+        return;
+      }
 
       if (code) {
         const successHtml = `<!DOCTYPE html>
@@ -177,57 +186,79 @@ ipcMain.handle("login-google", async () => {
         res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
         res.end(successHtml);
 
-        const { tokens } = await oAuth2Client.getToken(code);
-        oAuth2Client.setCredentials(tokens);
-
-        // Get channel name
-        const youtube = google.youtube({ version: "v3", auth: oAuth2Client });
-        let accountName = "Akun_" + Date.now();
         try {
-          const channelRes = await youtube.channels.list({
-            part: "snippet",
-            mine: true,
-          });
-          if (channelRes.data.items && channelRes.data.items.length > 0) {
-            accountName = channelRes.data.items[0].snippet.title
-              .replace(/[^a-zA-Z0-9_ -]/g, "")
-              .trim();
-            if (!accountName) accountName = "Akun_" + Date.now();
+          const { tokens } = await oAuth2Client.getToken(code);
+          oAuth2Client.setCredentials(tokens);
+
+          // Get channel name
+          const youtube = google.youtube({ version: "v3", auth: oAuth2Client });
+          let accountName = "Akun_" + Date.now();
+          try {
+            const channelRes = await youtube.channels.list({
+              part: "snippet",
+              mine: true,
+            });
+            if (channelRes.data.items && channelRes.data.items.length > 0) {
+              accountName = channelRes.data.items[0].snippet.title
+                .replace(/[^a-zA-Z0-9_ -]/g, "")
+                .trim();
+              if (!accountName) accountName = "Akun_" + Date.now();
+            }
+          } catch (e) {
+            console.error("Failed to get channel name", e);
           }
-        } catch (e) {
-          console.error("Failed to get channel name", e);
-        }
 
-        if (!fs.existsSync("tokens")) {
-          fs.mkdirSync("tokens");
-        }
-
-        fs.writeFileSync(`tokens/${accountName}.json`, JSON.stringify(tokens));
-
-        server.close();
-
-        // Menunggu 5 detik (sesuai countdown di browser) sebelum kembali ke app
-        setTimeout(() => {
-          if (win) {
-            if (win.isMinimized()) win.restore();
-            win.show();
-            win.focus();
-            win.setAlwaysOnTop(true);
-            setTimeout(() => win.setAlwaysOnTop(false), 1000);
-
-            win.webContents.send("login-success", accountName);
+          if (!fs.existsSync("tokens")) {
+            fs.mkdirSync("tokens");
           }
-        }, 5000);
+
+          fs.writeFileSync(`tokens/${accountName}.json`, JSON.stringify(tokens));
+
+          server.close();
+
+          // Wait 5s (matches browser countdown) then restore app
+          setTimeout(() => {
+            if (win) {
+              if (win.isMinimized()) win.restore();
+              win.show();
+              win.focus();
+              win.setAlwaysOnTop(true);
+              setTimeout(() => win.setAlwaysOnTop(false), 1000);
+              win.webContents.send("login-success", accountName);
+            }
+          }, 5000);
+        } catch (err) {
+          console.error("Failed to exchange auth code:", err.message);
+          server.close();
+          if (win) win.webContents.send("login-error", err.message);
+        }
       }
     })
     .listen(5000);
 
+  // Auto-close server after 5 minutes if no callback received
+  const serverTimeout = setTimeout(() => {
+    server.close();
+    console.warn("OAuth server closed: no callback received within 5 minutes.");
+  }, 5 * 60 * 1000);
+  server.on("close", () => clearTimeout(serverTimeout));
+
   await open(authUrl);
 });
 
+// Helper: detect token/auth errors and throw user-friendly messages
+function checkAuthError(err) {
+  const msg = (err.message || "").toLowerCase();
+  if (msg.includes("unauthorized_client") || msg.includes("invalid_client") || msg.includes("invalid_grant")) {
+    throw new Error(
+      "SESSION_EXPIRED: Your login session is invalid or expired. Please re-login in Step 02 (delete the old account and login again)."
+    );
+  }
+}
+
 ipcMain.handle(
   "transfer-playlist",
-  async (event, { url: playlistUrl, accountName, customName }) => {
+  async (event, { url: playlistUrl, accountName, customName, targetPlaylistId }) => {
     try {
       const credentials = JSON.parse(fs.readFileSync("credentials.json"));
       const token = JSON.parse(fs.readFileSync(`tokens/${accountName}.json`));
@@ -237,28 +268,53 @@ ipcMain.handle(
       const auth = new google.auth.OAuth2(
         client_id,
         client_secret,
-        redirect_uris[0],
+        "http://localhost:5000",
       );
 
       auth.setCredentials(token);
 
+      // Save refreshed token automatically
+      auth.on("tokens", (newTokens) => {
+        const merged = { ...token, ...newTokens };
+        fs.writeFileSync(`tokens/${accountName}.json`, JSON.stringify(merged));
+      });
+
       const youtube = google.youtube({ version: "v3", auth });
 
-      // Extract playlist ID
-      let playlistId = playlistUrl;
+      // Extract and validate playlist ID
+      const rawPlaylistInput = String(playlistUrl || "").trim();
+      if (!rawPlaylistInput) {
+        throw new Error("Playlist URL/ID is required.");
+      }
+
+      let playlistId = rawPlaylistInput;
       try {
-        const parsedUrl = new URL(playlistUrl);
-        if (parsedUrl.searchParams.has("list")) {
-          playlistId = parsedUrl.searchParams.get("list");
+        const parsedUrl = new URL(rawPlaylistInput);
+        const listParam = parsedUrl.searchParams.get("list");
+        if (!listParam) {
+          throw new Error("INVALID_PLAYLIST_INPUT");
         }
+        playlistId = listParam;
       } catch (e) {
-        // Kalau gagal parsing URL (mungkin user paste ID langsung atau URL jelek)
-        if (playlistUrl.includes("list=")) {
-          playlistId = playlistUrl.split("list=")[1].split("&")[0];
+        // If it's not a valid URL, try to parse manual list=... fragments
+        if (rawPlaylistInput.includes("list=")) {
+          playlistId = rawPlaylistInput.split("list=")[1].split("&")[0];
         }
       }
 
-      // GET source playlist details (untuk mengambil namanya)
+      try {
+        playlistId = decodeURIComponent(playlistId).trim();
+      } catch (_err) {
+        // Keep original if decode fails
+      }
+
+      if (!/^[a-zA-Z0-9_-]{10,80}$/.test(playlistId)) {
+        throw new Error(
+          "Invalid playlist URL/ID. Please paste a valid YouTube playlist link.",
+        );
+      }
+
+      // GET source playlist details (to get its name)
       let sourcePlaylistTitle = "Imported Playlist";
       try {
         const plRes = await youtube.playlists.list({
@@ -270,46 +326,80 @@ ipcMain.handle(
         }
       } catch (err) {
         console.error("Failed to get source playlist name:", err.message);
+        checkAuthError(err);
         if (err.message && err.message.toLowerCase().includes("quota")) {
           throw new Error(
             "Google Cloud daily API quota exceeded. Please try again tomorrow.",
           );
         }
+        if (
+          err.message &&
+          (err.message.toLowerCase().includes("invalid") ||
+            err.message.toLowerCase().includes("bad request"))
+        ) {
+          throw new Error(
+            "Invalid playlist URL/ID. Please paste a valid YouTube playlist link.",
+          );
+        }
+        throw err;
       }
 
-      // Use custom name if provided, otherwise use source playlist title
-      const playlistTitle = customName || sourcePlaylistTitle;
-
-      // GET videos
-      let videos = [];
-      let nextPageToken = null;
-
-      do {
-        const res = await youtube.playlistItems.list({
-          part: "snippet",
-          playlistId,
-          maxResults: 50,
-          pageToken: nextPageToken,
+      // Determine target playlist: use existing or create new
+      let newId;
+      if (targetPlaylistId) {
+        // Use the pre-selected existing playlist — skip creation (saves 50 quota units)
+        newId = targetPlaylistId;
+      } else {
+        const playlistTitle = customName || sourcePlaylistTitle;
+        const newPlaylist = await youtube.playlists.insert({
+          part: "snippet,status",
+          requestBody: {
+            snippet: { title: playlistTitle },
+            status: { privacyStatus: "private" },
+          },
         });
+        newId = newPlaylist.data.id;
+      }
 
-        videos.push(...res.data.items);
-        nextPageToken = res.data.nextPageToken;
-      } while (nextPageToken);
+      // Fetch all videos from source playlist (with pagination)
+      const videos = [];
+      let pageToken = undefined;
 
-      // CREATE playlist baru
-      const newPlaylist = await youtube.playlists.insert({
-        part: "snippet,status",
-        requestBody: {
-          snippet: {
-            title: playlistTitle,
-          },
-          status: {
-            privacyStatus: "private",
-          },
-        },
-      });
+      try {
+        do {
+          const listRes = await youtube.playlistItems.list({
+            part: "snippet",
+            playlistId,
+            maxResults: 50,
+            pageToken,
+          });
 
-      const newId = newPlaylist.data.id;
+          const items = listRes.data.items || [];
+          // Keep only entries that contain a valid video id
+          items.forEach((item) => {
+            const vid = item?.snippet?.resourceId?.videoId;
+            if (vid) videos.push(item);
+          });
+
+          pageToken = listRes.data.nextPageToken;
+        } while (pageToken);
+      } catch (err) {
+        checkAuthError(err);
+        if (
+          err.message &&
+          (err.message.toLowerCase().includes("invalid") ||
+            err.message.toLowerCase().includes("bad request"))
+        ) {
+          throw new Error(
+            "Invalid playlist URL/ID. Please paste a valid YouTube playlist link.",
+          );
+        }
+        throw err;
+      }
+
+      if (videos.length === 0) {
+        throw new Error("No valid videos found in source playlist.");
+      }
 
       // INSERT video satu per satu
       let successCount = 0;
@@ -373,6 +463,7 @@ ipcMain.handle(
       // KEMBALIKAN TOTAL HASILNYA
       return { status: "done", successCount, failedCount };
     } catch (err) {
+      checkAuthError(err);
       if (err.message && err.message.toLowerCase().includes("quota")) {
         throw new Error(
           "Your Google Cloud daily API quota (10,000 units/day) has been exhausted. This limit resets every midnight US time.",
@@ -399,5 +490,160 @@ ipcMain.handle("save-failed-list", async (event, { failed }) => {
   } catch (err) {
     console.error("Failed to save failed list:", err);
     return { success: false, error: err.message };
+  }
+});
+
+// Get user playlists (for dropdown in Save Links mode)
+ipcMain.handle("get-user-playlists", async (event, { accountName }) => {
+  try {
+    const token = JSON.parse(fs.readFileSync(`tokens/${accountName}.json`));
+    const credentials = JSON.parse(fs.readFileSync("credentials.json"));
+    const { client_id, client_secret, redirect_uris } = credentials.installed;
+
+    const auth = new google.auth.OAuth2(
+      client_id,
+      client_secret,
+      redirect_uris[0]
+    );
+    auth.setCredentials(token);
+
+    const youtube = google.youtube({ version: "v3", auth });
+    const res = await youtube.playlists.list({
+      part: "snippet",
+      mine: true,
+      maxResults: 50,
+    });
+
+    const playlists = res.data.items.map((p) => ({
+      id: p.id,
+      title: p.snippet.title,
+    }));
+
+    return { success: true, playlists };
+  } catch (err) {
+    console.error("Failed to get playlists:", err);
+    return { success: false, error: err.message };
+  }
+});
+
+// Save bulk links to playlist
+ipcMain.handle("save-bulk-links", async (event, { linksText, accountName, mode, playlistName, playlistId }) => {
+  try {
+    const credentials = JSON.parse(fs.readFileSync("credentials.json"));
+    const token = JSON.parse(fs.readFileSync(`tokens/${accountName}.json`));
+    const { client_id, client_secret } = credentials.installed;
+
+    const auth = new google.auth.OAuth2(
+      client_id,
+      client_secret,
+      "http://localhost:5000"
+    );
+    auth.setCredentials(token);
+
+    // Save refreshed token automatically
+    auth.on("tokens", (newTokens) => {
+      const merged = { ...token, ...newTokens };
+      fs.writeFileSync(`tokens/${accountName}.json`, JSON.stringify(merged));
+    });
+
+    const youtube = google.youtube({ version: "v3", auth });
+
+    // Extract video IDs dari links menggunakan regex
+    const videoIds = new Set();
+    const urlPatterns = [
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/g,
+      /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/g,
+    ];
+
+    urlPatterns.forEach((pattern) => {
+      let match;
+      while ((match = pattern.exec(linksText)) !== null) {
+        videoIds.add(match[1]);
+      }
+    });
+
+    if (videoIds.size === 0) {
+      throw new Error("Tidak ada video ID yang ditemukan di links");
+    }
+
+    // Tentukan playlist ID
+    let targetPlaylistId = playlistId;
+    if (mode === "new") {
+      const newPlaylist = await youtube.playlists.insert({
+        part: "snippet,status",
+        requestBody: {
+          snippet: {
+            title: playlistName || "Saved Links Playlist",
+          },
+          status: {
+            privacyStatus: "private",
+          },
+        },
+      });
+      targetPlaylistId = newPlaylist.data.id;
+    }
+
+    // Insert videos dengan tracking success/failed
+    let successCount = 0;
+    let failedCount = 0;
+
+    for (const [index, videoId] of Array.from(videoIds).entries()) {
+      try {
+        await youtube.playlistItems.insert({
+          part: "snippet",
+          requestBody: {
+            snippet: {
+              playlistId: targetPlaylistId,
+              resourceId: {
+                kind: "youtube#video",
+                videoId: videoId,
+              },
+            },
+          },
+        });
+
+        successCount++;
+        win.webContents.send("progress", {
+          current: index + 1,
+          total: videoIds.size,
+          videoId: videoId,
+          status: "success",
+          successCount,
+          failedCount,
+        });
+      } catch (err) {
+        console.log("ERROR VIDEO:", videoId, err.message);
+        failedCount++;
+        win.webContents.send("progress", {
+          current: index + 1,
+          total: videoIds.size,
+          videoId: videoId,
+          status: "error",
+          reason: (err.message || "").replace(/,/g, ""),
+          successCount,
+          failedCount,
+        });
+
+        if (err.message && err.message.toLowerCase().includes("quota")) {
+          throw new Error(
+            "Google Cloud daily API quota exceeded. Resume tomorrow."
+          );
+        }
+        continue;
+      }
+
+      // Delay 1 detik untuk mencegah spam
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+
+    return { status: "done", successCount, failedCount, playlistId: targetPlaylistId };
+  } catch (err) {
+    checkAuthError(err);
+    if (err.message && err.message.toLowerCase().includes("quota")) {
+      throw new Error(
+        "Your Google Cloud daily API quota (10,000 units/day) has been exhausted. This limit resets every midnight US time."
+      );
+    }
+    throw err;
   }
 });
