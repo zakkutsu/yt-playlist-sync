@@ -141,6 +141,34 @@ Kalau semua langkah benar, maka:
 Contoh progress:
 `Progres: 12 / 76 video ditambahkan...`
 
+## Mode Operasi (Tab)
+
+Aplikasi kini memiliki dua mode operasi yang dapat dipilih melalui tab di bagian atas langkah kerja:
+
+- **Sync Playlist**: Mode lama — masukkan URL playlist sumber, berikan nama playlist baru (opsional), lalu jalankan transfer seluruh isi playlist ke akun tujuan.
+- **Save Links**: Mode baru — tempelkan banyak link video (satu per baris) ke dalam textarea, pilih apakah ingin membuat playlist baru atau menggunakan playlist yang sudah ada, kemudian simpan semua link sekaligus ke playlist tujuan.
+
+Keduanya menggunakan antarmuka progress yang sama dan menampilkan kotak log terminal-style untuk memantau status per-video secara real-time.
+
+### Cara Pakai — Save Links
+
+1. Pilih tab **Save Links**.
+2. Tempelkan tautan YouTube pada textarea (satu per baris). Format yang didukung: `youtube.com/watch?v=ID`, `youtu.be/ID`, `youtube.com/shorts/ID`.
+3. Pilih opsi **Buat Playlist Baru** atau **Gunakan Playlist Lama**. Jika memilih gunakan playlist, pilih playlist dari dropdown (diambil dari akun yang sedang login).
+4. Klik **Simpan Links ke Playlist** untuk memulai proses. Proses akan menambahkan setiap video ke playlist yang dipilih atau dibuat.
+
+Catatan: Aplikasi akan mengekstrak video ID dari setiap baris dan mengabaikan baris yang tidak mengandung ID valid.
+
+### Terminal Log & Ekspor Daftar Gagal
+
+Selama proses berjalan, sebuah kotak log bergaya terminal akan menampilkan baris status untuk setiap video (SUKSES / GAGAL). Jika terdapat video yang gagal ditambahkan, pengguna dapat mengekspor daftar video yang gagal (fitur `Download daftar gagal`) untuk pengecekan ulang atau percobaan ulang manual.
+
+Backend mengirimkan event progress secara real-time dan menyediakan handler IPC baru yang relevan:
+
+- `get-user-playlists` — mengambil daftar playlist milik akun yang terautentikasi untuk mengisi dropdown.
+- `save-bulk-links` — menangani parsing link, pembuatan playlist baru bila diminta, dan penyisipan video satu-per-satu dengan delay untuk menghindari penalti kuota.
+
+
 ## Contoh Kasus
 
 Playlist: **76 videos**
@@ -169,9 +197,19 @@ Karena proses tambah video memakan kuota paling besar, batas real transfer per h
 Jadi kalau proses berhenti di sekitar angka 190-an dan muncul **Quota Exceeded (Error 403)**, itu normal. Lanjutkan lagi setelah kuota harian reset di hari berikutnya.
 
 ## Roadmap (Next Upgrade)
+## Changelog — Perubahan Terbaru
+
+- Menambahkan sistem tab: **Sync Playlist** dan **Save Links**
+- Menambahkan mode **Save Links** untuk menyimpan banyak video dari daftar link
+- Menambahkan kotak log terminal-style dengan status per-video dan opsi ekspor daftar gagal
+- Menambahkan dukungan `get-user-playlists` dan `save-bulk-links` di backend
+- Menambahkan opsi **Custom Playlist Name** saat transfer
+
+
+## Roadmap (Next Upgrade)
 
 - [ ] Tombol Stop / Resume
-- [ ] Log video gagal
-- [ ] Retry system
+- [x] Log video gagal (sudah tersedia; dapat diekspor)
+- [ ] Retry system (partial — daftar gagal tersedia untuk retry manual)
 - [ ] Multiple playlist transfer
 - [ ] UI lebih modern
