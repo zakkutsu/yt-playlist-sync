@@ -35,12 +35,12 @@ module.exports = {
   toastAccMsg:   "Pilih atau tambahkan akun YouTube di Langkah 02.",
 
   // Transfer states
-  processing:    "Memproses Transfer...",
-  done:          "Selesai! ✨",
-  doneLabel:     "Selesai!",
+  processing:    "Sedang diproses...",
+  done:          "Selesai",
+  doneLabel:     "Selesai",
   failed:        "Gagal",
   errorOccurred: "Terjadi kesalahan",
-  tryAgain:      "Coba Lagi",
+  tryAgain:      "Coba ulang",
   ofVideos:      (c, t) => `${c} dari ${t} video`,
 
   // Custom rename
@@ -50,18 +50,18 @@ module.exports = {
 
   // Tab navigation
   tabSyncPlaylist:      "Sinkron Playlist",
-  tabSaveLinks:         "Simpan Links",
+  tabSaveLinks:         "Simpan Tautan",
   tabSyncDesc:          "Transfer seluruh playlist dari satu akun ke akun lain",
   tabLinksDesc:         "Simpan banyak link ke satu playlist",
 
   // Save Links mode
   destPlaylist:         "Playlist Tujuan",
-  linksLabel:           "Daftar Link",
-  linksTextarea:        "Tempel link di sini (satu per baris)...",
+  linksLabel:           "Daftar Tautan",
+  linksTextarea:        "Tempel tautan di sini (satu per baris)...",
   linksCreateNew:       "Buat Playlist Baru",
   linksUseExisting:     "Gunakan Playlist Lama",
   selectPlaylist:       "Pilih playlist...",
-  btnSaveLinks:         "Simpan Links ke Playlist",
+  btnSaveLinks:         "Simpan Tautan ke Playlist",
   newPlaylistName:      "Nama Playlist Baru",
 
   // Log and Toast additions
@@ -70,9 +70,22 @@ module.exports = {
   toastTransferDone:    "Transfer Selesai",
   toastTransferPartial: (s, f) => `${s} Berhasil, ${f} Gagal.`,
   toastTransferAll:     "Semua video berhasil ditransfer!",
-  toastLinksDone:       "Simpan Links Selesai",
+  toastLinksDone:       "Simpan Tautan Selesai",
   toastLinksPartial:    (s, f) => `${s} Berhasil, ${f} Gagal.`,
-  toastLinksAll:        "Semua link berhasil disimpan!",
-  toastNeedLink:        "Silakan masukkan link",
-  toastNeedPlaylist:    "Silakan pilih playlist"
+  toastLinksAll:        "Semua tautan berhasil disimpan!",
+  toastNeedLink:        "Silakan masukkan tautan",
+  toastNeedPlaylist:    "Silakan pilih playlist",
+
+  loadingPlaylists:     "Memuat daftar playlist...",
+  noPlaylistsFound:     "Tidak ada playlist pada akun ini",
+  loadFailed:           "Pemuatan Gagal",
+  loadFailedMsg:        "Daftar playlist tidak dapat dimuat.",
+  loadFailedRetry:      "Gagal memuat, silakan coba lagi",
+  loadErrorPrefix:      (msg) => `Kesalahan: ${msg}`,
+  loginFailed:          "Login Gagal",
+  loginFailedMsg:       (msg) => `Login gagal: ${msg}`,
+  sessionExpired:       "Sesi Berakhir",
+  reloginStep02:        "Silakan login ulang pada Langkah 02.",
+  logSuccess:           "BERHASIL",
+  logFailed:            "GAGAL"
 };

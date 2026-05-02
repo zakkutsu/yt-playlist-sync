@@ -35,12 +35,12 @@ module.exports = {
   toastAccMsg:   "Please select or add a YouTube account in Step 02.",
 
   // Transfer states
-  processing:    "Processing Transfer...",
-  done:          "Done! ✨",
-  doneLabel:     "Done!",
-  failed:        "Failed",
+  processing:    "Processing...",
+  done:          "Completed",
+  doneLabel:     "Completed",
+  failed:        "Unsuccessful",
   errorOccurred: "An error occurred",
-  tryAgain:      "Try Again",
+  tryAgain:      "Retry",
   ofVideos:      (c, t) => `${c} of ${t} videos`,
 
   // Custom rename
@@ -68,11 +68,24 @@ module.exports = {
   logTitle:             "Transfer Log",
   logStats:             (s, f) => `Success: ${s} | Failed: ${f}`,
   toastTransferDone:    "Transfer Completed",
-  toastTransferPartial: (s, f) => `${s} Succeeded, ${f} Failed.`,
+  toastTransferPartial: (s, f) => `${s} succeeded, ${f} failed.`,
   toastTransferAll:     "All videos successfully transferred!",
   toastLinksDone:       "Save Links Completed",
-  toastLinksPartial:    (s, f) => `${s} Succeeded, ${f} Failed.`,
+  toastLinksPartial:    (s, f) => `${s} succeeded, ${f} failed.`,
   toastLinksAll:        "All links successfully saved!",
   toastNeedLink:        "Please enter links",
-  toastNeedPlaylist:    "Please select a playlist"
+  toastNeedPlaylist:    "Please select a playlist",
+
+  loadingPlaylists:     "Loading playlists...",
+  noPlaylistsFound:     "No playlists were found on this account",
+  loadFailed:           "Load Failed",
+  loadFailedMsg:        "Playlists could not be fetched.",
+  loadFailedRetry:      "Failed to load - please try again",
+  loadErrorPrefix:      (msg) => `Error: ${msg}`,
+  loginFailed:          "Login Failed",
+  loginFailedMsg:       (msg) => `Login failed: ${msg}`,
+  sessionExpired:       "Session Expired",
+  reloginStep02:        "Please sign in again in Step 02.",
+  logSuccess:           "SUCCESS",
+  logFailed:            "FAILED"
 };
