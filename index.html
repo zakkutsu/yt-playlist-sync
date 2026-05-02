@@ -564,7 +564,7 @@
           return;
         }
 
-        select.innerHTML = `<option value="">⏳ Loading playlists...</option>`;
+        select.innerHTML = `<option value="">${t("loadingPlaylists")}</option>`;
         select.disabled = true;
 
         try {
@@ -578,14 +578,14 @@
               select.appendChild(opt);
             });
           } else if (res && res.success && res.playlists.length === 0) {
-            select.innerHTML = `<option value="">⚠️ No playlists found on this account</option>`;
+            select.innerHTML = `<option value="">${t("noPlaylistsFound")}</option>`;
           } else {
-            select.innerHTML = `<option value="">❌ Failed to load — try again</option>`;
-            showToast("error", "Load Failed", res.error || "Could not fetch playlists.");
+            select.innerHTML = `<option value="">${t("loadFailedRetry")}</option>`;
+            showToast("error", t("loadFailed"), res.error || t("loadFailedMsg"));
           }
         } catch (err) {
-          select.innerHTML = `<option value="">❌ Error: ${err.message}</option>`;
-          showToast("error", "Load Failed", err.message);
+          select.innerHTML = `<option value="">${t("loadErrorPrefix", err.message)}</option>`;
+          showToast("error", t("loadFailed"), err.message);
         } finally {
           select.disabled = false;
         }
@@ -600,7 +600,7 @@
           return;
         }
 
-        select.innerHTML = `<option value="">⏳ Loading playlists...</option>`;
+        select.innerHTML = `<option value="">${t("loadingPlaylists")}</option>`;
         select.disabled = true;
 
         try {
@@ -614,14 +614,14 @@
               select.appendChild(opt);
             });
           } else if (res && res.success && res.playlists.length === 0) {
-            select.innerHTML = `<option value="">⚠️ No playlists found on this account</option>`;
+            select.innerHTML = `<option value="">${t("noPlaylistsFound")}</option>`;
           } else {
-            select.innerHTML = `<option value="">❌ Failed to load — try again</option>`;
-            showToast("error", "Load Failed", res.error || "Could not fetch playlists.");
+            select.innerHTML = `<option value="">${t("loadFailedRetry")}</option>`;
+            showToast("error", t("loadFailed"), res.error || t("loadFailedMsg"));
           }
         } catch (err) {
-          select.innerHTML = `<option value="">❌ Error: ${err.message}</option>`;
-          showToast("error", "Load Failed", err.message);
+          select.innerHTML = `<option value="">${t("loadErrorPrefix", err.message)}</option>`;
+          showToast("error", t("loadFailed"), err.message);
         } finally {
           select.disabled = false;
         }
@@ -728,8 +728,8 @@
       });
 
       ipcRenderer.on("login-error", (_, message) => {
-        setStatus("login-status", "error", "Login failed — " + message);
-        showToast("error", "Login Failed", message);
+        setStatus("login-status", "error", t("loginFailedMsg", message));
+        showToast("error", t("loginFailed"), message);
       });
 
       // Step 3: Transfer
@@ -790,7 +790,7 @@
           // Session expired — prompt re-login
           if (errorMsg.startsWith("SESSION_EXPIRED:")) {
             errorMsg = errorMsg.replace("SESSION_EXPIRED: ", "");
-            showToast("error", "Session Expired", "Please re-login in Step 02.");
+            showToast("error", t("sessionExpired"), t("reloginStep02"));
           }
 
           document.getElementById("progress-detail").innerText = errorMsg;
@@ -818,10 +818,10 @@
           let logLine = "";
 
           if (data.status === "success") {
-            logLine = `<div class="text-green-400">><span class="text-slate-500 ml-1 mr-2">[${idPadding}/${data.total}]</span> ID: ${data.videoId} <span class="text-slate-500">........</span> OK</div>`;
+            logLine = `<div class="text-green-400">><span class="text-slate-500 ml-1 mr-2">[${idPadding}/${data.total}]</span> ID: ${data.videoId} <span class="text-slate-500">........</span> ${t("logSuccess")}</div>`;
           } else {
             let shortReason = data.reason.length > 40 ? data.reason.substring(0, 40) + "..." : data.reason;
-            logLine = `<div class="text-red-400">><span class="text-slate-500 ml-1 mr-2">[${idPadding}/${data.total}]</span> ID: ${data.videoId} <span class="text-slate-500">........</span> FAIL (${shortReason})</div>`;
+            logLine = `<div class="text-red-400">><span class="text-slate-500 ml-1 mr-2">[${idPadding}/${data.total}]</span> ID: ${data.videoId} <span class="text-slate-500">........</span> ${t("logFailed")} (${shortReason})</div>`;
           }
 
           logContent.insertAdjacentHTML('beforeend', logLine);
@@ -941,7 +941,7 @@
             // Session expired — prompt re-login
             if (errorMsg.startsWith("SESSION_EXPIRED:")) {
               errorMsg = errorMsg.replace("SESSION_EXPIRED: ", "");
-              showToast("error", "Session Expired", "Please re-login in Step 02.");
+              showToast("error", t("sessionExpired"), t("reloginStep02"));
             }
 
             document.getElementById("progress-detail").innerText = errorMsg;

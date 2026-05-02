@@ -1,215 +1,195 @@
 # PlaylistSync
 
-Tool desktop berbasis Electron untuk memindahkan playlist YouTube dari satu akun ke akun lain dengan mudah dan aman.
+Aplikasi desktop berbasis Electron untuk memindahkan atau menyimpan konten YouTube playlist secara aman, transparan, dan terukur menggunakan YouTube Data API v3.
 
 ![Electron](https://img.shields.io/badge/Electron-191970?style=flat-square&logo=Electron&logoColor=white)
 ![Node.js](https://img.shields.io/badge/Node.js-43853D?style=flat-square&logo=node.js&logoColor=white)
 ![YouTube API](https://img.shields.io/badge/YouTube_API_v3-FF0000?style=flat-square&logo=youtube&logoColor=white)
 
----
+## Ringkasan
 
-##  Download
+PlaylistSync menyediakan dua mode utama:
 
--  **[Download PlaylistSync (Latest)](https://github.com/zakkutsu/yt-playlist-sync/releases/latest/download/playlistsync.Setup.1.0.0.exe)**  
-  Windows installer — **Recommended**
+- **Sync Playlist**: menyalin isi playlist sumber ke akun tujuan.
+- **Save Links**: menyimpan banyak tautan video ke satu playlist tujuan.
 
-**Requirements:** Windows 10 / 11 (64-bit)
+Seluruh proses didukung progress real-time, log per video, serta ekspor daftar video gagal untuk tindak lanjut manual.
 
----
+## Unduh
 
-## Fitur
+- **[Download PlaylistSync (Latest)](https://github.com/zakkutsu/yt-playlist-sync/releases/latest/download/playlistsync.Setup.1.0.0.exe)**
 
-- Transfer playlist dari akun A ke akun B
-- Login hanya 1 akun (akun tujuan)
-- Progress real-time
-- Skip video yang tidak bisa diakses (private/deleted)
-- Stabil menggunakan YouTube Data API
+Persyaratan sistem:
 
----
+- Windows 10 / 11 (64-bit)
 
-## Cara Kerja
+## Fitur Utama
 
-1. Playlist akun A dijadikan **public / unlisted**
-2. App membaca semua video dari playlist tersebut
-3. Login menggunakan akun B
-4. App membuat playlist baru
-5. Semua video valid akan dimasukkan ke playlist baru
+- Transfer playlist antar akun YouTube.
+- Opsi nama playlist kustom saat transfer.
+- Mode simpan massal tautan video ke playlist.
+- Monitoring progres real-time dengan terminal-style log.
+- Statistik berhasil/gagal selama proses berjalan.
+- Ekspor daftar video gagal (untuk retry manual).
+- Dukungan multiakun berbasis token lokal (`tokens/*.json`).
 
----
+## Arsitektur Keamanan dan Kuota (BYOC)
 
-## Catatan Penting
+PlaylistSync menggunakan pendekatan **Bring Your Own Credentials (BYOC)**.
+Setiap pengguna wajib memakai project Google Cloud milik sendiri.
 
-- Video **private / deleted / region locked** tidak bisa ditransfer
-- Jumlah video di YouTube adalah **jumlah kotor**
-- Hasil transfer = **jumlah bersih (video yang valid saja)**
+Prinsip:
 
----
+- **Bukan** kredensial bersama untuk banyak pengguna.
+- **Melainkan** satu pengguna, satu kredensial, satu kuota harian.
 
-## Instalasi
+Keuntungan:
+
+- Kuota tidak saling berbenturan antar pengguna.
+- Tidak ada bottleneck kuota global.
+- Risiko gangguan lebih terisolasi per pengguna.
+
+## Instalasi dan Menjalankan Aplikasi
 
 ```bash
 npm install
 npm start
 ```
 
-## Arsitektur Kuota & Keamanan
+## Setup Google Cloud (Wajib)
 
-Aplikasi ini menggunakan konsep **Bring Your Own Credentials (BYOC)**. Setiap pengguna **wajib** membuat project di Google Cloud masing-masing.
+Langkah konfigurasi awal:
 
-**BUKAN:** "Satu credentials dibagikan ke banyak pengguna" (Akan cepat terkena _limit global_)
-**YANG BENAR:** "Setiap pengguna membuat credentials sendiri"
+1. Buka [Google Cloud Console](https://console.cloud.google.com/).
+2. Buat project baru dan aktifkan project tersebut.
+3. Aktifkan **YouTube Data API v3** melalui:
+   - `APIs & Services > Library`
+4. Konfigurasikan **OAuth consent screen**:
+   - Pilih `External`
+   - Isi `App name`, `User support email`, dan `Developer contact`
+   - Lanjutkan hingga selesai
+5. Jika status aplikasi masih `Testing`, tambahkan akun tujuan ke `Test Users`.
+6. Buat OAuth Client ID:
+   - `APIs & Services > Credentials > Create Credentials > OAuth Client ID`
+   - Pilih tipe `Desktop app`
+7. Unduh file JSON OAuth, lalu ubah nama file menjadi:
+   - `credentials.json`
 
-**Keuntungan sistem ini:**
+Checklist konfigurasi final:
 
-1. **Kuota Tidak Bentrok:** Setiap pengguna memiliki jatah API 10.000 unit/hari secara mandiri.
-2. **Tidak Ada Limit Global:** Aplikasi bisa dipakai banyak orang tanpa khawatir terkena bottleneck.
-3. **Lebih Aman:** Tidak ada _shared credential_. Jika satu pengguna mengalami error, tidak akan mengganggu pengguna lain.
+- YouTube Data API v3 aktif
+- OAuth consent screen selesai
+- `credentials.json` tersedia
+- Test users telah ditambahkan (jika status masih Testing)
 
----
-
-## Setup Google Cloud
-
-Karena sistem yang sangat _scalable_ di atas, setup awal menjadi tanggung jawab setiap pengguna (bukan sekadar _plug-and-play_). Ikuti langkah ini:
-
-**1. Masuk ke Google Cloud Console**
-
-- Buka tautan: [https://console.cloud.google.com/](https://console.cloud.google.com/)
-
-**2. Buat Project**
-
-- Klik dropdown project (atas kiri)
-- Klik **New Project**
-- Isi nama (bebas, misal: yt-transfer)
-- Klik **Create**
-- Pastikan project itu aktif
-
-**3. Enable API**
-
-- Masuk ke: **APIs & Services > Library**
-- Cari: **YouTube Data API v3**
-- Klik **Enable**
-
-**4. Setup OAuth Consent Screen**
-
-- Masuk ke: **APIs & Services > OAuth consent screen**
-- Isi bagian ini:
-  - **User Type**: pilih **External**
-  - **App Information**:
-    - **App name**: bebas (misal: YT Transfer)
-    - **User support email**: email Anda
-  - **Developer contact**:
-    - isi email Anda
-- Klik **Save and Continue**
-- **Scope** (biarkan default) -> langsung **Save and Continue**
-- **Test Users (INI PENTING)**
-  - Kalau status masih Testing:
-    - Klik **Add Users**
-    - Masukkan email akun yang akan login (akun tujuan / akun B)
-    - Klik **Save**
-  - **Catatan Penting**: Jika menu **Test Users** tidak tersedia, berarti status Anda _In Production_. Solusinya, klik _Back to testing_.
-
-**5. Buat OAuth Client ID**
-
-- Masuk ke: **APIs & Services > Credentials**
-- Klik: **Create Credentials > OAuth Client ID**
-- Pilih: **Desktop app**
-- Isi Name: bebas (misal: yt-app)
-- Klik **Create**
-
-**6. Download file JSON**
-
-- Klik **Download JSON**
-- Rename file yang didownload menjadi: `credentials.json`
-
-**7. Status Final yang Benar**
-Kalau semua langkah benar, maka:
-
-- API sudah aktif
-- OAuth selesai dibuat
-- File `credentials.json` siap digunakan
-- Test Users sudah ditambahkan (jika dalam status testing)
-
-## Cara Pakai & Login
+## Alur Penggunaan
 
 1. Buka aplikasi PlaylistSync.
-2. Di Tahap 1, klik tombol **Load credentials.json** lalu pilih file JSON yang Anda download dari Google Cloud.
-3. Di Tahap 2, klik **Login Google**. Pilih akun Google tujuan (akun tempat Anda ingin menaruh playlist baru), lalu klik _Allow_.
-4. Setelah berhasil, token otomatis tersimpan.
-5. Paste link playlist YouTube yang ingin dikloning.
-6. Klik **Start Transfer** dan tunggu sampai indikator selesai!
+2. Step 1: klik **Load credentials.json** dan pilih file kredensial.
+3. Step 2: klik **Login Google** lalu otorisasi akun tujuan.
+4. Pilih mode operasi pada tab Step 3.
 
-Contoh progress:
-`Progres: 12 / 76 video ditambahkan...`
+### Mode 1: Sync Playlist
 
-## Mode Operasi (Tab)
+Digunakan untuk menyalin isi playlist sumber ke akun tujuan.
 
-Aplikasi kini memiliki dua mode operasi yang dapat dipilih melalui tab di bagian atas langkah kerja:
+Langkah:
 
-- **Sync Playlist**: Mode lama — masukkan URL playlist sumber, berikan nama playlist baru (opsional), lalu jalankan transfer seluruh isi playlist ke akun tujuan.
-- **Save Links**: Mode baru — tempelkan banyak link video (satu per baris) ke dalam textarea, pilih apakah ingin membuat playlist baru atau menggunakan playlist yang sudah ada, kemudian simpan semua link sekaligus ke playlist tujuan.
+1. Tempel URL playlist sumber (`...playlist?list=...`).
+2. Pilih mode tujuan:
+   - Buat playlist baru, atau
+   - Gunakan playlist tujuan yang sudah ada.
+3. Isi nama playlist kustom (opsional).
+4. Jalankan transfer.
 
-Keduanya menggunakan antarmuka progress yang sama dan menampilkan kotak log terminal-style untuk memantau status per-video secara real-time.
+### Mode 2: Save Links
 
-### Cara Pakai — Save Links
+Digunakan untuk menyimpan banyak tautan video ke satu playlist.
 
-1. Pilih tab **Save Links**.
-2. Tempelkan tautan YouTube pada textarea (satu per baris). Format yang didukung: `youtube.com/watch?v=ID`, `youtu.be/ID`, `youtube.com/shorts/ID`.
-3. Pilih opsi **Buat Playlist Baru** atau **Gunakan Playlist Lama**. Jika memilih gunakan playlist, pilih playlist dari dropdown (diambil dari akun yang sedang login).
-4. Klik **Simpan Links ke Playlist** untuk memulai proses. Proses akan menambahkan setiap video ke playlist yang dipilih atau dibuat.
+Langkah:
 
-Catatan: Aplikasi akan mengekstrak video ID dari setiap baris dan mengabaikan baris yang tidak mengandung ID valid.
+1. Tempel daftar tautan (satu baris satu tautan).
+2. Pilih playlist tujuan:
+   - Buat playlist baru, atau
+   - Gunakan playlist yang sudah ada.
+3. Klik **Simpan Tautan ke Playlist**.
 
-### Terminal Log & Ekspor Daftar Gagal
+Format tautan yang didukung:
 
-Selama proses berjalan, sebuah kotak log bergaya terminal akan menampilkan baris status untuk setiap video (SUKSES / GAGAL). Jika terdapat video yang gagal ditambahkan, pengguna dapat mengekspor daftar video yang gagal (fitur `Download daftar gagal`) untuk pengecekan ulang atau percobaan ulang manual.
+- `youtube.com/watch?v=VIDEO_ID`
+- `youtu.be/VIDEO_ID`
+- `youtube.com/shorts/VIDEO_ID`
 
-Backend mengirimkan event progress secara real-time dan menyediakan handler IPC baru yang relevan:
+Catatan:
 
-- `get-user-playlists` — mengambil daftar playlist milik akun yang terautentikasi untuk mengisi dropdown.
-- `save-bulk-links` — menangani parsing link, pembuatan playlist baru bila diminta, dan penyisipan video satu-per-satu dengan delay untuk menghindari penalti kuota.
+- Sistem mengekstrak `videoId` dari setiap baris.
+- Baris yang tidak valid akan diabaikan.
 
+## Progress, Log, dan Error Handling
+
+- Progress bar menampilkan persentase proses secara real-time.
+- Log terminal-style menampilkan status per video: berhasil/gagal.
+- Statistik berjalan: total berhasil dan gagal.
+- Jika ada kegagalan, daftar item gagal dapat diekspor untuk retry manual.
+
+Handler IPC terkait:
+
+- `get-user-playlists`: mengambil daftar playlist akun terautentikasi.
+- `transfer-playlist`: transfer playlist sumber ke target.
+- `save-bulk-links`: simpan tautan video massal ke playlist target.
+- `save-failed-list`: simpan daftar video gagal ke file JSON.
+
+## Catatan Kuota API (Penting)
+
+Kuota default YouTube Data API adalah **10.000 unit/hari** per project.
+
+Biaya kuota per operasi:
+
+- `playlistItems.list` = **1 unit**
+- `playlists.insert` = **50 unit**
+- `playlistItems.insert` = **50 unit per video**
+
+Dengan pola biaya tersebut, batas transfer praktis per hari umumnya berada di kisaran **190-198 video**.
+
+Apabila muncul **Quota Exceeded (403)**, lanjutkan proses setelah kuota harian reset (umumnya pada pergantian hari waktu US).
+
+## Batasan
+
+- Video private/deleted/region locked tidak dapat diproses.
+- Playlist private milik akun lain tidak dapat dibaca.
+- Hasil transfer adalah jumlah video valid, bukan total kotor yang tampil di YouTube.
+
+## Troubleshooting Singkat
+
+- **Gagal login / sesi kedaluwarsa**:
+  - login ulang di Step 2.
+- **Playlist tidak ditemukan**:
+  - pastikan URL berisi parameter `list=` yang valid.
+- **Proses berhenti di kisaran 190-an video**:
+  - kemungkinan kuota harian habis.
 
 ## Contoh Kasus
 
-Playlist: **76 videos**
+Sumber playlist: **76 video**
 
-Hasil:
+Hasil proses:
 
-- 68 berhasil
-- 8 gagal (private/deleted)
+- 68 video berhasil
+- 8 video gagal (private/deleted)
 
-## Limitasi
+## Changelog Terbaru
 
-- Tidak bisa transfer video private
-- Tidak bisa ambil playlist private
-- Bergantung pada quota API Google
+- Penambahan tab **Sync Playlist** dan **Save Links**.
+- Penambahan mode penyimpanan tautan video secara massal.
+- Penambahan terminal-style log dengan statistik sukses/gagal.
+- Penambahan ekspor daftar gagal.
+- Penambahan dukungan backend `get-user-playlists` dan `save-bulk-links`.
+- Penambahan opsi nama playlist kustom.
 
-### Catatan Kuota API (Penting)
-
-Setiap pengguna memang mendapat kuota default **10.000 unit/hari**, tetapi setiap aksi API memiliki "biaya" tersendiri:
-
-- Baca isi playlist (`playlistItems.list`) = **1 unit**
-- Buat playlist baru (`playlists.insert`) = **50 unit**
-- Tambah 1 video ke playlist (`playlistItems.insert`) = **50 unit / video**
-
-Karena proses tambah video memakan kuota paling besar, batas real transfer per hari biasanya ada di kisaran **190-198 video**.
-
-Jadi kalau proses berhenti di sekitar angka 190-an dan muncul **Quota Exceeded (Error 403)**, itu normal. Lanjutkan lagi setelah kuota harian reset di hari berikutnya.
-
-## Roadmap (Next Upgrade)
-## Changelog — Perubahan Terbaru
-
-- Menambahkan sistem tab: **Sync Playlist** dan **Save Links**
-- Menambahkan mode **Save Links** untuk menyimpan banyak video dari daftar link
-- Menambahkan kotak log terminal-style dengan status per-video dan opsi ekspor daftar gagal
-- Menambahkan dukungan `get-user-playlists` dan `save-bulk-links` di backend
-- Menambahkan opsi **Custom Playlist Name** saat transfer
-
-
-## Roadmap (Next Upgrade)
+## Roadmap
 
 - [ ] Tombol Stop / Resume
-- [x] Log video gagal (sudah tersedia; dapat diekspor)
-- [ ] Retry system (partial — daftar gagal tersedia untuk retry manual)
+- [x] Log video gagal (sudah tersedia)
+- [ ] Retry otomatis untuk video gagal
 - [ ] Multiple playlist transfer
-- [ ] UI lebih modern
+- [ ] Peningkatan UI/UX
